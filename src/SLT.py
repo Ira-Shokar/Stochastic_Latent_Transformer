@@ -1,3 +1,9 @@
+# Copyright (c) 2023 Ira Shokar
+
+# Use of this source code is governed by an MIT-style
+# license that can be found in the LICENSE file or at
+# https://opensource.org/licenses/MIT.#
+
 import numpy as np, torch, tqdm, wandb, io, random, utils, models
 
 class Stochastic_Latent_Transformer:

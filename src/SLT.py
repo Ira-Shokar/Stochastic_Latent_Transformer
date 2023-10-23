@@ -43,7 +43,7 @@ class Stochastic_Latent_Transformer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Define Models
-        self.AE    = models.Autoencoder(self.feat_dim, self.latent_dim, 2).to(self.device)
+        self.AE    = models.Autoencoder(self.feat_dim, self.latent_dim, self.width).to(self.device)
         self.Trans = models.Transformer(self.latent_dim, self.seq_len).to(self.device)
 
         # Define Optimiser
@@ -211,28 +211,28 @@ def hellinger_distance_3D(p, q):
 
 
 @torch.no_grad()
-def load_model(arch, latent_size, s_weight, epochs, run_num):
-    weights_path = f'{utils.path}data/torch_script_models/weights/'
-    file_name    = f'weights_{arch}_{latent_size}_{s_weight}_{epochs}_{run_num}'
+def load_model(arch, latent_size):
+    weights_path = f'{utils.path}data/torch_script_models/'
+    file_name    = f'weights_{arch}_{latent_size}'
     file         = f'{weights_path}{file_name}.pt'
     return torch.jit.load(io.BytesIO(open(file, 'rb').read()), map_location='cpu')
 
 
 @torch.no_grad()
-def SLT_prediction_ensemble(AE, RNN, seq_len, latent_size, truth_ensemble, evolution_time,
+def SLT_prediction_ensemble(AE, Trans, seq_len, latent_size, truth_ensemble, evolution_time,
                             seed=0, inference=True, print_time=False):
 
     hardware = "cuda" if torch.cuda.is_available() else "cpu"
     device   = torch.device(hardware)
 
-    # TODO - Determanistic Seeding:
-    #if inference==True and hardware=="cpu":
-    #    torch.use_deterministic_algorithms(True)
-    #    torch.manual_seed(seed)
-    #    random.seed(seed)
-s
+    # TODO - fix deterministic seeding:
+    if inference==True and hardware=="cpu":
+        torch.use_deterministic_algorithms(True)
+        torch.manual_seed(seed)
+        random.seed(seed)
+
     AE.eval().to(device)
-    RNN.eval().to(device)
+    Trans.eval().to(device)
 
     truth_ensemble, _, _ = utils.unit_gaussain(truth_ensemble.to(device))
     ens_size = truth_ensemble.size(0)
@@ -244,7 +244,7 @@ s
 
     z[:, :seq_len] = AE.Encoder(truth_ensemble[:, :seq_len])
     for t in range(seq_len, evolution_time+seq_len):
-        z[:, t], a[:, t] = RNN(z[:, t-seq_len:t])
+        z[:, t], a[:, t] = Trans(z[:, t-seq_len:t])
     u = AE.Decoder(z)
 
     time_2 = time.time()

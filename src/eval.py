@@ -13,35 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import utils, SLT                                      # import modules
+import numpy as np, matplotlib.pyplot as plt, torch    # import packages      
 
-import utils, SLT
-# import packages
-import numpy as np, matplotlib.pyplot as plt, torch, scipy
+#seed = 0 # TODO - To reproduce results, change this to generate different ensembles
 
-seed = 0 # To reproduce results, change this to generate different ensembles
+# Define Parameters
+LATENT_DIM = 64 
+SEQ_LENGTH = 10
 
-# Hyperparameters
-BATCH_SIZE    = 200;
-EPOCHS        = 200;
-LEARNING_RATE = 2e-3;
-LATENT_DIM    = 64; 
-SEQ_LENGTH    = 10;
-SEQ_FORWARD   = 1;
-ENS_SIZE      = 4;
-S_WEIGHT      = 0;
-RUN_NUM       = 6; 
-LAYERS        = 2;
-SWEEP         = False;
-EVOLUTION_TIME = 500
-
+AE    = SLT.load_model('AE'   , LATENT_DIM)
+Trans = SLT.load_model('Trans', LATENT_DIM)
 
 time_step_start = 100   
 ensemble_size   = 8
-truth_ens       = utils.truth_ensemble(SEQ_LENGTH, EVOLUTION_TIME, ensemble_size, time_step_start)
+evolution_time  = 500
 
-AE                        = SLT.load_model('AE'   , LATENT_DIM, 0, EPOCHS, RUN_NUM)
-RNN                       = SLT.load_model('Trans', LATENT_DIM, 0, EPOCHS, RUN_NUM)
-truth_ens, preds_ens, att = SLT.SLT_prediction_ensemble(
-    AE, RNN, SEQ_LENGTH, LATENT_DIM, truth_ens, EVOLUTION_TIME,
-     seed, inference=False, print_time=True
+truth_ens = utils.truth_ensemble(
+    SEQ_LENGTH, evolution_time, ensemble_size, time_step_start
     )
+
+truth_ens, preds_ens, att = SLT.SLT_prediction_ensemble(
+    AE, Trans, SEQ_LENGTH, LATENT_DIM, truth_ens, evolution_time,
+    seed, inference=False, print_time=True
+    )
+
+# Plot the ensemble
+utils.plot_ensembles(truth_ens, preds_ens, SEQ_LENGTH, show=True)

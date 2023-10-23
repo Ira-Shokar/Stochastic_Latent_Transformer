@@ -569,13 +569,13 @@ def load_num_ens2(s, t, seq_len=5, roll=False):
 
 
 @torch.no_grad()
-def generate_ML_ens(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
+def generate_ML_ens(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
 
     if AE_model is not None:
         AE_model.to(device)
         AE_model.eval()
-    RNN_model.to(device)
-    RNN_model.eval()
+    Trans_model.to(device)
+    Trans_model.eval()
 
     truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
     if t<seq_len:
@@ -589,20 +589,20 @@ def generate_ML_ens(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_dim
     data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
     data = torch.from_numpy(data).transpose(1, 2).float().to(device)
 
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(RNN_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, RNN_model, seq_len, latent_dim, data, time_steps)
+    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
+    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
     
     return preds.transpose(1,2), att
 
 
 @torch.no_grad()
-def generate_ML_ens2(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
+def generate_ML_ens2(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
 
     if AE_model is not None:
         AE_model.to(device)
         AE_model.eval()
-    RNN_model.to(device)
-    RNN_model.eval()
+    Trans_model.to(device)
+    Trans_model.eval()
 
     truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
     test_data  = np.genfromtxt(truth_path+'1000_1000_6000_umean.csv', delimiter=',')
@@ -611,20 +611,20 @@ def generate_ML_ens2(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_di
     data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
     data = torch.from_numpy(data).transpose(1, 2).float().to(device)
 
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(RNN_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, RNN_model, seq_len, latent_dim, data, time_steps)
+    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
+    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
     
     return preds.transpose(1,2), att
 
 
 @torch.no_grad()
-def generate_ML_ens3(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
+def generate_ML_ens3(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
 
     if AE_model is not None:
         AE_model.to(device)
         AE_model.eval()
-    RNN_model.to(device)
-    RNN_model.eval()
+    Trans_model.to(device)
+    Trans_model.eval()
 
     truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
     test_data  = np.genfromtxt(truth_path+'e_umean.csv', delimiter=',')
@@ -633,8 +633,8 @@ def generate_ML_ens3(AE_model, RNN_model, s, t, ens_size=6, seq_len=5, latent_di
     data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
     data = torch.from_numpy(data).transpose(1, 2).float().to(device)
 
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(RNN_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, RNN_model, seq_len, latent_dim, data, time_steps)
+    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
+    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
     
     return preds.transpose(1,2), att
 

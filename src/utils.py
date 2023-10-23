@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np, matplotlib.pyplot as plt, torch, subprocess, os, time, sklearn, scipy
+import numpy as np, matplotlib.pyplot as plt, torch, os, io, sklearn
 from matplotlib.colors import LogNorm
 from PIL import Image
 
@@ -77,8 +77,39 @@ def load_training_data(path, history_len):
     return X, Y
 
 
+def truth_ensemble(seq_len=5, evolution_time=256, ens_size=8, time_step_start=100):
+    truth_ens   = np.zeros((ens_size, evolution_time+seq_len, 256)).astype('float32')
+    truth_path  = f'{path}data/test_data/'
+    t           = time_step_start
+    test_data_1 = np.genfromtxt(truth_path+f'0_{t-100}_{t}_umean.csv', delimiter=',')
+    test_data_1 = test_data_1[:, -seq_len:]
+
+    for i in range(10):
+        try:
+            test_data_2 = np.genfromtxt(truth_path+f'{i+1}_{t}_{t+500}_umean.csv',delimiter=',')
+            truth_ens[i, :seq_len] = test_data_1.T
+            truth_ens[i, seq_len:] = test_data_2[:, :evolution_time].T
+        except: pass
+    return torch.from_numpy(truth_ens)
+
+
+def truth_long(seq_len=5, time_step_start=100, time_step_end=5000):
+    t          = time_step_start
+    test_data  = np.genfromtxt(f'{path}data/test_data/0_{t-100}_{t}_umean.csv', delimiter=',')
+    test_data  = test_data[:, -seq_len:]
+    
+
+    for t in range(time_step_start, time_step_end+100, 100):
+        try:
+            test_data_ = np.genfromtxt(f'{path}data/test_data/0_{t}_{t+100}_umean.csv',delimiter=',')
+            test_data  = np.concatenate((test_data, test_data_), axis=1)
+        except: pass
+    return torch.from_numpy(test_data).T.unsqueeze(0).type(torch.float32)
+
+
+
 class DataGenerator(torch.utils.data.Dataset):
-    def __init__(self, X, Y, steps=None, batch_size=32, seq_forward=10):
+    def __init__(self, X, Y, steps=None, batch_size=32, seq_forward=1):
         self.X           = X
         self.Y           = Y
         self.seq_forward = seq_forward
@@ -94,22 +125,6 @@ class DataGenerator(torch.utils.data.Dataset):
         Y_batch = self.Y[idx*self.batch_size: (idx+1)*self.batch_size]
         Y_batch = Y_batch[:, :self.seq_forward]
         return (X_batch, Y_batch)
-
-
-def truth_ensemble(seq_len=5, evolution_time=256, ens_size=8, time_step_start=100):
-    truth_ens   = np.zeros((ens_size, evolution_time+seq_len, 256)).astype('float32')
-    truth_path  = f'{path}data/test_data/'
-    t           = time_step_start
-    test_data_1 = np.genfromtxt(truth_path+f'0_{t-100}_{t}_umean.csv', delimiter=',')
-    test_data_1 = test_data_1[:, -seq_len:]
-
-    for i in range(10):
-        try:
-            test_data_2 = np.genfromtxt(truth_path+f'{i+1}_{t}_{t+500}_umean.csv',delimiter=',')
-            truth_ens[i, :seq_len] = test_data_1.T
-            truth_ens[i, seq_len:] = test_data_2[:, :evolution_time].T
-        except: pass
-    return torch.from_numpy(truth_ens)
     
 
 ### MODEL EVALUATION ##############################################################################
@@ -226,7 +241,8 @@ def plot_ensembles(truth_ens, preds_ens, seq_len=5, damping_time=False, show=Tru
         shift = 0
         if title=='Neural Network Emulation': shift+=num_y
         ax = axs[(i//4) + shift, (i)%4]
-        im = ax.imshow(truth.T, aspect='auto', extent=extent, vmin=-8.263900130987167, vmax=8.826799690723419)
+        im = ax.imshow(truth.T, aspect='auto', extent=extent,
+            vmin=-8.263900130987167, vmax=8.826799690723419)
         ax.axvline(x=v_line, linestyle='--', color='w')
         ax.set_title(f'{title} {i+1}')
         ax.set_ylabel('y - Latitude')
@@ -465,6 +481,48 @@ def plot_CPRS(mse_slt, rep_slt, mse_t, rep_t, seq_len=10, show=True):
     ax.set_xlim(0, 250)
     ax.legend(fontsize=5.2*2)
 
+    if show==True:
+        plt.show()
+    else:
+        img_buf = io.BytesIO()
+        plt.savefig(img_buf, format='png')
+        plt.close()
+
+        im    = Image.open(img_buf)
+        im_np = np.array(im)
+        img_buf.close()
+        return im_np
+
+def plot_long(truth_long, preds_long, seq_len=5, show=True):
+
+    truth_long = truth_long[0].detach().cpu().numpy()
+    preds_long = preds_long[0].detach().cpu().numpy()
+
+    fig, axs  = plt.subplots(2, 1, figsize=(16, 6), constrained_layout=True)
+    tick_pos  = [-1, -0.5, 0, 0.5, 1]
+    labels    = [r'-$\pi$', r'-$\pi/2$', r'0', r'$\pi/2$',r'$\pi$']
+
+    extent  = [0, truth_long.shape[0], -1, 1]
+    x_label = 't'
+    v_line  = seq_len
+
+    def plot(i, truth, title):
+        shift = 0
+        if title=='Neural Network Emulation': shift+=1
+        ax = axs[i]
+        im = ax.imshow(truth.T, aspect='auto', extent=extent, vmin=-8.263900130987167, vmax=8.826799690723419)
+        ax.axvline(x=v_line, linestyle='--', color='w')
+        ax.set_title(f'{title}')
+        ax.set_ylabel('y - Latitude')
+        ax.set_xlabel(x_label)
+        ax.set_yticks(tick_pos, labels)
+        return im
+
+    imt = plot(0, truth_long, 'Numerical Integtation')
+    imp = plot(1, preds_long , 'Neural Network Emulation')
+
+    fig.colorbar(imp, ax=axs.ravel().tolist(), shrink=0.465, pad=0.015, label=r'U(y,t)')
+        
     if show==True:
         plt.show()
     else:

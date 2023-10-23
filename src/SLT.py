@@ -13,17 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np, torch, tqdm, wandb, io, random, utils, models
+import numpy as np, torch, tqdm, io, random, time, utils, models
 
 class Stochastic_Latent_Transformer:
     def __init__(self, feat_dim=256, latent_dim=256, seq_len=1, ens_size=4, epochs=1,
-                 learning_rate=1e-4, seq_forward=2, training_steps=1, val_steps=1, num_heads=16, 
-                 save_path=None, file_name=None, layers=2, width=2):
+                 learning_rate=1e-4, training_steps=1, val_steps=1, num_heads=16, 
+                 layers=2, width=2, save_path=None, file_name=None, run_num=0):
         super().__init__()
 
         # Define Parameters
         self.save_path      = save_path
         self.file_name      = file_name   
+        self.run_num        = run_num
 
         self.total_epochs   = epochs
         self.training_steps = training_steps
@@ -34,7 +35,6 @@ class Stochastic_Latent_Transformer:
         self.latent_dim     = latent_dim
         self.seq_len        = seq_len
         self.ens_size       = ens_size
-        self.seq_forward    = seq_forward
         self.num_heads      = num_heads
         self.layers         = layers
         self.width          = width
@@ -49,20 +49,9 @@ class Stochastic_Latent_Transformer:
         # Define Optimiser
         self.optimiser = torch.optim.Adam(
             list(self.AE.parameters()) + list(self.Trans.parameters()), lr=self.lr)
-        
-        self.trans_optimiser = torch.optim.Adam(self.Trans.parameters(), lr=self.lr)
 
         # Define LR scheduler
-        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer  = self.optimiser,
-            T_max      = self.total_epochs)
-        
-        # Validation Ensemblex
-        self.truth_ensemble = utils.truth_ensemble(
-            seq_len         = self.seq_len,
-            ens_size        = 8,
-            evolution_time  = 500,
-            time_step_start = 100)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR( self.optimiser, gamma=0.9825)
 
         # Loss function
         self.MSE = torch.nn.MSELoss()
@@ -75,7 +64,7 @@ class Stochastic_Latent_Transformer:
     def save_model(self, add_path=''):
         path       = lambda i, j, k: f"{i}weights/weights_{j}_{k}.pt" 
         file_name  = f'{self.latent_dim}_{0}_{self.total_epochs}_'
-        file_name += f'{RUN_NUM}{add_path}'
+        file_name += f'{self.run_num}{add_path}'
         torch.jit.script(self.AE   ).save(path(self.save_path, 'AE'   , file_name))
         torch.jit.script(self.Trans).save(path(self.save_path, 'Trans', file_name))
 
@@ -99,21 +88,17 @@ class Stochastic_Latent_Transformer:
                             self.validate(*val_batch)
 
                             if self.val_step==(self.val_steps-1):
-                                if self.epoch%10==0 or self.epoch<10: self.generate_plots()
-                                if self.epoch%5==0: self.save_model()
+                                if self.epoch%10==0: self.save_model()
                                 self.track_losses(pbar, val=True)
                   
     
     def forward(self, x):
-        z = torch.zeros(x.size(0), self.ens_size, self.seq_forward, self.latent_dim, device=self.device)
+        z = torch.zeros(
+            x.size(0), self.ens_size, 1, self.latent_dim, device=self.device)
 
         x = self.AE.Encoder(x).unsqueeze(1).expand(-1, self.ens_size, -1, -1)
         for i in range(self.ens_size):
-            z_hist = x[:, i]
-            for t in range(self.seq_forward):
-                z_t    = self.Trans(z_hist)[0]
-                z_hist = torch.cat((z_hist, z_t.unsqueeze(1)), dim=1)[:, 1:]
-            z[:, i] = z_hist[:, -self.seq_forward:]
+            z[:, i] = self.Trans(x[:, i])[0]
         u = self.AE.Decoder(z)
         x = self.AE.Decoder(x[:, 0])
         return u, z, x
@@ -123,7 +108,7 @@ class Stochastic_Latent_Transformer:
         """
         Inputs:
         x: ["batch", "ensemble_size", "data_size"], contains all forecasts for each batch element
-        y: ["batch", 1              , "data_size"], contains all verifications for each batch element
+        y: ["batch", 1 , "data_size"], contains all verifications for each batch element
         p: norm, "Euclidean distance" if 2 
 
         Output:
@@ -192,30 +177,6 @@ class Stochastic_Latent_Transformer:
         self.val_loss_dict['z_dist'] += z_dist.item()
 
 
-    def generate_plots(self):
-
-        truth_ens, preds_ens, att = utils.prediction_ensemble(self.AE, self.Trans, self.seq_len, self.latent_dim, self.truth_ensemble, 500)
-        truth_mat, preds_mat      = utils.calculate_grad_fields(truth_ens, preds_ens)
-        H_t, H_p, edges           = utils.calculate_pdfs(truth_mat, preds_mat)
-        _, mse_slt, rep_slt       = utils.CRPS(preds_ens[1:], truth_ens[0])
-        _, mse_t, rep_t           = utils.CRPS(truth_ens[1:], truth_ens[0])
-
-        try: self.H_distance      = utils.calculate_1D_pdfs(truth_mat[::2], preds_mat[1::2], nbins=150)[3]
-        except: pass
-
-        if self.epoch==0: self.H_t_distance = utils.calculate_1D_pdfs(truth_mat[::2], truth_mat[1::2], nbins=150)[3]
-
-        self.img       = utils.plot_ensembles(truth_ens[:4], preds_ens[:4], self.seq_len, show=False)
-        self.psd       = utils.plot_spectra(  truth_ens, preds_ens, show=False)
-        self.pdf       = utils.plot_pdf(   H_t, H_p, edges, show=False)
-        self.pdf_1d    = utils.plot_1d_pdf(H_t, H_p, edges, show=False)
-        self.att_w     = utils.plot_attention(att[:4], show=False)
-        self.att_w_100 = utils.plot_attention(att[:4, :100], show=False)
-        self.img_10    = utils.plot_ensembles(truth_ens[:4, :self.seq_len+10] , preds_ens[:4, :self.seq_len+10] , self.seq_len, show=False)
-        self.img_100   = utils.plot_ensembles(truth_ens[:4, :self.seq_len+100], preds_ens[:4, :self.seq_len+100], self.seq_len, show=False)
-        self.cprs      = utils.plot_CPRS(mse_slt, rep_slt, mse_t, rep_t, self.seq_len, show=False)
-
-
     def track_losses(self, pbar, val=False):
         
         loss_dict = {x:self.loss_dict[x]/(self.step+1) for x in self.loss_dict}
@@ -229,7 +190,6 @@ class Stochastic_Latent_Transformer:
                 'mirror_val' : f"---------",
                 })
         
-
         else:
             val_loss_dict = {x:self.val_loss_dict[x]/(self.val_step+1) for x in self.val_loss_dict}
 
@@ -241,31 +201,13 @@ class Stochastic_Latent_Transformer:
                 'mirror_val' : f"{val_loss_dict['mirror'] :.2E}" ,
                 })
 
-            wandb.log({
-                "epoch"          : self.epoch                    ,
-                "ES"             : loss_dict['ES']               ,
-                "MSE"            : loss_dict['MSE']              ,
-                "rep"            : loss_dict['rep']              ,
-                "z_dist"         : loss_dict['z_dist']           ,
-                "mirror"         : loss_dict['mirror']           ,
-                "ES_val"         : val_loss_dict['ES']           ,
-                "MSE_val"        : val_loss_dict['MSE']          ,
-                "rep_val"        : val_loss_dict['rep']          ,
-                "z_dist_val"     : val_loss_dict['z_dist']       ,
-                "mirror_val"     : val_loss_dict['mirror']       ,
-                'Helliger'       : self.H_distance               ,
-                'Helliger_t'     : self.H_t_distance             ,
-                "img"            : wandb.Image(self.img)         ,
-                "img_10"         : wandb.Image(self.img_10)      ,
-                "img_100"        : wandb.Image(self.img_100)     ,
-                "psd"            : wandb.Image(self.psd)         ,
-                "hist"           : wandb.Image(self.pdf)         ,
-                "1d_hist"        : wandb.Image(self.pdf_1d)      ,
-                'att_weights'    : wandb.Image(self.att_w)       ,
-                'att_weights_100': wandb.Image(self.att_w_100)   ,
-                'CRPS'           : wandb.Image(self.cprs)        ,
-                'lr'             : self.optimiser.param_groups[0]['lr']
-            })
+@torch.no_grad()
+def hellinger_distance_3D(p, q):
+    d  = (torch.sqrt(p.mean((1,2))) - torch.sqrt(q.mean((1,2)))) ** 2
+    d += (torch.sqrt(p.mean((0,2))) - torch.sqrt(q.mean((0,2)))) ** 2
+    d += (torch.sqrt(p.mean((0,1))) - torch.sqrt(q.mean((0,1)))) ** 2
+    h = torch.sqrt(torch.sum(d) / (2*3))
+    return h
 
 
 @torch.no_grad()
@@ -277,27 +219,38 @@ def load_model(arch, latent_size, s_weight, epochs, run_num):
 
 
 @torch.no_grad()
-def SLT_prediction_ensemble(AE, RNN, seq_len, latent_size, truth_ensemble, evolution_time, seed=0):
-
-    torch.use_deterministic_algorithms(True)
-    torch.manual_seed(seed)
-    random.seed(seed)
+def SLT_prediction_ensemble(AE, RNN, seq_len, latent_size, truth_ensemble, evolution_time,
+                            seed=0, inference=True, print_time=False):
 
     hardware = "cuda" if torch.cuda.is_available() else "cpu"
     device   = torch.device(hardware)
-    AE.eval()
-    RNN.eval()
+
+    # TODO - Determanistic Seeding:
+    #if inference==True and hardware=="cpu":
+    #    torch.use_deterministic_algorithms(True)
+    #    torch.manual_seed(seed)
+    #    random.seed(seed)
+s
+    AE.eval().to(device)
+    RNN.eval().to(device)
 
     truth_ensemble, _, _ = utils.unit_gaussain(truth_ensemble.to(device))
     ens_size = truth_ensemble.size(0)
     
     z = torch.zeros((ens_size, seq_len+evolution_time, latent_size)).to(device)
     a = torch.zeros((ens_size, seq_len+evolution_time, seq_len+1, seq_len+1)).to(device)
+    
+    time_1 = time.time()
 
     z[:, :seq_len] = AE.Encoder(truth_ensemble[:, :seq_len])
     for t in range(seq_len, evolution_time+seq_len):
         z[:, t], a[:, t] = RNN(z[:, t-seq_len:t])
     u = AE.Decoder(z)
+
+    time_2 = time.time()
+
+    if print_time: 
+        print(f'Prediction time: {(time_2-time_1)/ens_size:.4f} seconds')
 
     truth_ensemble = utils.un_unit_gaussain(truth_ensemble)*100
     prediction     = utils.un_unit_gaussain(u)*100

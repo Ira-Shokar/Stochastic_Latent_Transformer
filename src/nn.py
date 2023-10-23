@@ -31,8 +31,9 @@ class SpectralConv1d(torch.nn.Module):
         self.modes = max(self.in_dim, self.out_dim)
 
         self.scale   = 1 / (in_channels+out_channels)**0.5
-        self.weights = torch.nn.Parameter(torch.rand(in_channels, out_channels, self.modes, dtype=torch.cfloat) * self.scale)
         self.bias    = torch.nn.Parameter(torch.zeros(out_channels, self.modes, dtype=torch.cfloat))
+        self.weights = torch.nn.Parameter(torch.rand(
+                       in_channels, out_channels, self.modes, dtype=torch.cfloat) * self.scale)
 
         k = lambda x: torch.fft.fftfreq(x)*x
 

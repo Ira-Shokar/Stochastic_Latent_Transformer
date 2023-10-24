@@ -4,9 +4,11 @@ This repository contains the code for the paper: [Stochastic Latent Transformer:
 
 In this work
 
+## Stochastic Latent Transformer Model Architecture
 ![Stochastic Latent Transformer Model Architecture](static/SLT.png "Stochastic Latent Transformer Model Architecture")
 
 
+## Latidude-time plots displaying jets generated via numerical integration and by the Stochastic Latent Transformer
 ![Latidude-time plots displaying jets generated via numerical integration and by the Stochastic Latent Transformer](static/lat_time.png "Latidude-time plots displaying jets generated via numerical integration and by the Stochastic Latent Transformer")
 
 ## Files

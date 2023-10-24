@@ -1,13 +1,39 @@
-## Capturing a Stochastically-Forced Zonal Jet System with a Stochastic Latent Transformer
+# Stochastic Latent Transformer
 
-Seasonal and longer-term prediction of mid-latitude weather and climate remains a major challenge due to the complexity of the mechanisms that drive the dynamics as well as their chaotic nature. This work extend work (<a href="https://www.damtp.cam.ac.uk/user/is500/phd_proposal.html">webpage</a>) which looked at encapsulating the dynamics of a simplified model of atmospheric circulation by using a neural network to find a reduced-order-model of the system. The MRes study highlighted the following research questions, that will form the basis for exploration during the PhD: (i) Can machine learning (ML) be used to better understand the variability exhibited in models of atmospheric circulation? (ii) Can ML be used to emulate improved stochastic parameterisation schemes?
+This repository contains the code for the paper: [Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jet Dynamics](https://arxiv.org/)
 
-Naturally the two research questions are coupled, as the ability to accurately encapsulate the dynamics of a system will allow us to explore questions regarding its nature, variability, and the tendencies of the parameterisation due to how the model represents these processes, while understanding the variability will inform how best to produce a representation.
-          
-The project is motivated by the issue of Global Circulation Models (GCMs), that describe oceanic and atmospheric dynamics, being incredibly computationally expensive, and as a result not all scales can be simulated. Processes that take place on length scales smaller than the spatial resolution of the GCM, as well as fast scale dynamics, must be approximated, with these approximations known as sub-grid parameterisations. A large source of model uncertainty is a result of their parameterisation schemes, due to the chaotic nature of the dynamics, leading to questions regarding the fidelity of these models and thus their usefulness.
-          
-Due to the computational cost of GCMs, the project will focus on a simplified ‘toy’ model, that uses a beta-plane approximation to encapsulate rotational planetary motion, as well reducing the system to a 2-D plane by considering the atmosphere as shallow fluid layer when compared to the horizontal scale. The 2-D nature of the system results in a lack of turbulence and thus a stochastic forcing is required to parameterise the small-scale eddies. This quasi-2-D nature of planetary scale motions gives rise to dynamics of interest, including the formation of jet streams and cyclones.
-          
-We will focus on the evolution of these jets, that themselves play a fundamental role in the climate system, transporting geophysically-important quantities, such as momentum, heat, and tracers, including chemically and thermodynamically important quantities such as ozone and water vapour. Understanding how these vary in response to changes in concentrations of greenhouse gases is important in understanding the implications of climate change for regional weather patterns. There are outstanding questions regarding factors controlling the variability of these jets, including whether lower or higher resolution models effect the variability of a model as processes that occur at different length scales, such as energy transfers, are required to parameterised.
-          
-To explore the system variability due to the stochastic parameterisations, addressing (i), ML will be used to find a mapping between a system state and how stable the system is with regards to the attractor that is driving the system. By quantifying stability this way one can begin to understand the impact of the stochastic forcing on the dynamics of the system, and how observed phenomena are driven. This will also be compared to a stratified system to observe how the parameterisations drive the system compare with a system that exhibits its own internally generated turbulence.  We finally will look to develop emulations of stochastic parameterisations using Deep Learning (ii), with the goal of being able to utilise the computational speed-up of ML networks to include more complexity without increasing the time to run whole models- leading to better projections.
+In this work, we formulate a new neural operator by parameterizing the integral kernel directly in Fourier space, allowing for an expressive and efficient architecture. 
+We perform experiments on Burgers' equation, Darcy flow, and the Navier-Stokes equation (including the turbulent regime). 
+Our Fourier neural operator shows state-of-the-art performance compared to existing neural network methodologies and it is up to three orders of magnitude faster compared to traditional PDE solvers.
+
+## Files
+
+- Directory `src` contains the python scripts to define and train the Stochatic Latent Transformer using [Pytorch](https://github.com/pytorch/pytorch).
+          - `src/nn.py` defines the Translation Equivarient Pointwise 1D Convolution (TEPC) layers as well as the Multihead_Self_Attention operation and the Stochatic_Attention_Block.
+          - `src/models.py` defines Autoencoder and Stochatic Transformer architectures.
+          - `src/SLT.py` defines Stochastic_Latent_Transformer, the contains the training and validation loops, loss function and other training utilities. It also contains model loading, the hellinger_distance_3D evaluation metric and the inference function to generate new trajectories using the Stochastic Latent Transformer.
+          - `src/train.py` defines model and training hyperparameters, loads training data and fits the model.
+          - `src/eval.py` loads trained models, forecasts new trajectories from a set of inital condtions and plots the outputs.
+          - `src/utils.py` defines utilities used during training and evaluation.
+          - Directory `vae` defines training of the temporal VAE and adversarial training for comaparison.
+
+- Directory `notebooks` contains notebooks used for evaluation.
+          - `notebooks/evaluation.ipynb` loads trained models, forecasts new trajectories from a set of inital condtions and plots the outputs before some evaluative metrics.
+          - `notebooks/jet_transitions.ipynb` plots PDFs for determaning properties of spontaneous transition events.
+
+- Directory `QGF` contains the julia scripts used to generate the numerical integrations of the beta-plane turbulence model in 2D using [GeophysicalFlows.jl](https://github.com/FourierFlows/GeophysicalFlows.jl).
+          - `QGF/forced_beta_SL.jl` defines the model parameters and forcing for a Quasi-geostrophic flow on a 2D periodic beta-plane and integrates using a pseudo-spectral solver .
+          - `QGF/plots_SL.jl` reads the JLD2 files output from `forced_beta_SL.jl` and plots latitude-time plots of zonally-averaged zonal velocity (U) as well as the assocaited fields and saves the time evolution of U as a csv.
+
+## Datasets
+We provide the training data output from `QGF/forced_beta_SL.jl` used for training in `src/train.py` in the following Zenodo repositoy:
+We provide the evaluation data output from `QGF/forced_beta_SL.jl` used for testing in `src/eval.py`, `notebooks/evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy:
+
+## Models
+We provide the trained STL model in the form of a torchscript object, that can is evaluated using _eval.py_, _evaluation.ipynb_ and _notebooks/jet_transitions.ipynb_ in the Zenodo repositoy:
+
+## Citations
+
+```
+```
+

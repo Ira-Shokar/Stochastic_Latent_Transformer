@@ -31,9 +31,9 @@ In this work
     - [`QGF/plots_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/plots_SL.jl) reads the JLD2 files output from `forced_beta_SL.jl` and plots latitude-time plots of zonally-averaged zonal velocity (U) as well as the assocaited fields and saves the time evolution of U as a csv.
 
 ## Datasets
-We provide the training data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for training in `src/train.py` in the following Zenodo repositoy:
+We provide the training data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for training in `src/train.py` in the following Zenodo repositoy: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10034268.svg)](https://doi.org/10.5281/zenodo.10034268)
 
-We provide the evaluation data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for testing in `src/eval.py`, `notebooks/evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy:
+We provide the evaluation data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for testing in `src/eval.py`, `notebooks/evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10034268.svg)](https://doi.org/10.5281/zenodo.10034268)
 
 ## Models
 We provide the trained STL model in the form of a torchscript object, that can is evaluated using [`src/eval.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/eval.py), [`notebooks/evaluation.ipynb`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/notebooks/evaluation.ipynb) and [`notebooks/jet_transitions.ipynb`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/notebooks/jet_transitions.ipynb) in the Zenodo repositoy:

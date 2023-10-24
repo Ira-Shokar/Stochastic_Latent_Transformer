@@ -8,7 +8,7 @@ Our Fourier neural operator shows state-of-the-art performance compared to exist
 
 ## Files
 
-- Directory `src` contains the python scripts to define and train the Stochatic Latent Transformer using [Pytorch](https://github.com/pytorch/pytorch).
+ - Directory `src` contains the python scripts to define and train the Stochatic Latent Transformer using [Pytorch](https://github.com/pytorch/pytorch).
           - `src/nn.py` defines the Translation Equivarient Pointwise 1D Convolution (TEPC) layers as well as the Multihead_Self_Attention operation and the Stochatic_Attention_Block.
           - `src/models.py` defines Autoencoder and Stochatic Transformer architectures.
           - `src/SLT.py` defines Stochastic_Latent_Transformer, the contains the training and validation loops, loss function and other training utilities. It also contains model loading, the hellinger_distance_3D evaluation metric and the inference function to generate new trajectories using the Stochastic Latent Transformer.
@@ -30,7 +30,7 @@ We provide the training data output from `QGF/forced_beta_SL.jl` used for traini
 We provide the evaluation data output from `QGF/forced_beta_SL.jl` used for testing in `src/eval.py`, `notebooks/evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy:
 
 ## Models
-We provide the trained STL model in the form of a torchscript object, that can is evaluated using _eval.py_, _evaluation.ipynb_ and _notebooks/jet_transitions.ipynb_ in the Zenodo repositoy:
+We provide the trained STL model in the form of a torchscript object, that can is evaluated using `eval.py`, `evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy:
 
 ## Citations
 

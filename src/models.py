@@ -19,11 +19,11 @@ class Autoencoder(torch.nn.Module):
     def __init__(self, feat_dim=256, lat_dim=64, width=1):
         super().__init__()
 
-        self.enc0 = nn.SpectralConv1d(1, width, feat_dim, feat_dim)
-        self.enc1 = nn.SpectralConv1d(width, 1, feat_dim, lat_dim)
+        self.enc0 = nn.TEPC_1D(1, width, feat_dim, feat_dim)
+        self.enc1 = nn.TEPC_1D(width, 1, feat_dim, lat_dim)
 
-        self.dec0 = nn.SpectralConv1d(1, width, lat_dim, feat_dim)
-        self.dec1 = nn.SpectralConv1d(width, 1, feat_dim, feat_dim)
+        self.dec0 = nn.TEPC_1D(1, width, lat_dim, feat_dim)
+        self.dec1 = nn.TEPC_1D(width, 1, feat_dim, feat_dim)
 
 
     def Encoder(self, x):

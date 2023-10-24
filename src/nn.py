@@ -15,7 +15,7 @@
 
 import torch 
 
-class SpectralConv1d(torch.nn.Module):
+class TEPC_1D(torch.nn.Module):
     def __init__(self, in_channels: int, out_channels: int, in_dim:int,  out_dim: int):
         super(SpectralConv1d, self).__init__()
         """

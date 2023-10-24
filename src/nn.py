@@ -108,7 +108,7 @@ class Multihead_Self_Attention(torch.nn.Module):
         return o, a.mean(1)
 
 
-class Attention_Block(torch.nn.Module):
+class Stochatic_Attention_Block(torch.nn.Module):
     def __init__(self, dim, num_heads, first=False, last=False):
         super().__init__()
 

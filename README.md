@@ -32,6 +32,7 @@ In this work
 
 ## Datasets
 We provide the training data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for training in `src/train.py` in the following Zenodo repositoy:
+
 We provide the evaluation data output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) used for testing in `src/eval.py`, `notebooks/evaluation.ipynb` and `notebooks/jet_transitions.ipynb` in the Zenodo repositoy:
 
 ## Models

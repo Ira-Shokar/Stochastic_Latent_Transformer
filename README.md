@@ -4,6 +4,8 @@ This repository contains the code for the paper: [Stochastic Latent Transformer:
 
 In this work
 
+![Stochastic Latent Transformer Model Architecture](static/SLT.pdf "Stochastic Latent Transformer Model Architecture")
+
 ## Files
 
  - Directory [`src`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src) contains the python scripts to define and train the Stochatic Latent Transformer using [Pytorch](https://github.com/pytorch/pytorch).

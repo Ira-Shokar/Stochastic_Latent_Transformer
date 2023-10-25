@@ -96,7 +96,7 @@ class Stochatic_Transformer(torch.nn.Module):
         z, a = self.att_block_0(z)
         z, _ = self.att_block_1(z)
 
-        z = self.fc_mlp0(z)
+        z = self.fc_mlp0(z[:, -1])
         z = torch.nn.functional.gelu(z)
         z = self.fc_mlp1(z)
 

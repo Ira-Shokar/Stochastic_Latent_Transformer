@@ -12,8 +12,8 @@ This repository contains the code for the paper: [Stochastic Latent Transformer:
 ## Files
 
  - Directory [`src`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src) contains the python scripts to define and train the Stochatic Latent Transformer using [Pytorch](https://github.com/pytorch/pytorch).
-    - [`src/nn.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/nn.py)  defines the Translation Equivarient Pointwise 1D Convolution (TEPC) layers as well as the Multihead_Self_Attention operation and the Stochatic_Attention_Block.
-    - [`src/models.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/models.py)  defines Autoencoder and Stochatic Transformer architectures.
+    - [`src/nn.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/nn.py)  defines the Translation Equivarient Pointwise 1D Convolution (TEPC) layers as well as the Multihead_Attention operation and the Attention_Block.
+    - [`src/models.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/models.py) defines Autoencoder and Stochatic Transformer architectures.
     - [`src/SLT.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/SLT.py)  defines Stochastic_Latent_Transformer, the contains the training and validation loops, loss function and other training utilities. It also contains model loading, the hellinger_distance_3D evaluation metric and the inference function to generate new trajectories using the Stochastic Latent Transformer.
     - [`src/train.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/train.py) defines model and training hyperparameters, loads training data and fits the model.
     - [`src/eval.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/eval.py) loads trained models, forecasts new trajectories from a set of inital condtions and plots the outputs.

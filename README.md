@@ -18,7 +18,7 @@ This repository contains the code for the paper: [Stochastic Latent Transformer:
     - [`src/train.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/train.py) defines model and training hyperparameters, loads training data and fits the model.
     - [`src/eval.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/eval.py) loads trained models, forecasts new trajectories from a set of inital condtions and plots the outputs.
     - [`src/utils.py`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/utils.py) defines utilities used during training and evaluation.
-    - Directory `vae` defines training of the temporal VAE and adversarial training for comaparison.
+    - Directory [`vae`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/src/vae) defines training of the temporal VAE and adversarial training for comaparison.
 
 - Directory [`notebooks`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/notebooks) contains notebooks used for evaluation.
     - [`notebooks/evaluation.ipynb`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/notebooks/evaluation.ipynb) loads trained models, forecasts new trajectories from a set of inital condtions and plots the outputs before some evaluative metrics.

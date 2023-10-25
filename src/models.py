@@ -66,8 +66,11 @@ class Stochatic_Transformer(torch.nn.Module):
         self.att_block_0 = nn.Attention_Block(dim, num_heads, stochastic=True)
         self.att_block_1 = nn.Attention_Block(dim, num_heads)
 
-        self.fc_mlp0 = torch.nn.Linear(dim, dim)
-        self.fc_mlp1 = torch.nn.Linear(dim, dim)
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(dim, dim*2),
+            torch.nn.GELU(),
+            torch.nn.Linear(dim*2, dim)
+        )
 
         k = lambda x: torch.fft.fftfreq(x)*x
         self.register_buffer('k', k(dim//2+1))
@@ -96,9 +99,7 @@ class Stochatic_Transformer(torch.nn.Module):
         z, a = self.att_block_0(z)
         z, _ = self.att_block_1(z)
 
-        z = self.fc_mlp0(z[:, -1])
-        z = torch.nn.functional.gelu(z)
-        z = self.fc_mlp1(z)
+        z = self.mlp(z[:, -1])
 
         z = self.unshift_phase(z, phi)
 

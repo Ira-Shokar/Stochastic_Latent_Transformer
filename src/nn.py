@@ -18,12 +18,6 @@ import torch
 class TEPC_1D(torch.nn.Module):
     def __init__(self, in_channels: int, out_channels: int, in_dim:int,  out_dim: int):
         super(SpectralConv1d, self).__init__()
-        """
-        Initializes the 1D Fourier layer. It does FFT, linear transform, and Inverse FFT.
-        Args:
-            in_channels (int): input channels to the FNO layer
-            out_channels (int): output channels of the FNO layer
-        """
 
         self.in_dim  = in_dim //2+1
         self.out_dim = out_dim//2+1
@@ -116,13 +110,16 @@ class Attention_Block(torch.nn.Module):
     def __init__(self, dim, num_heads, stochastic=False):
         super().__init__()
 
-        self.mha     = Multihead_Attention(dim, num_heads, stochatic)
+        self.mha  = Multihead_Attention(dim, num_heads, stochatic)
 
-        self.ln_1    = torch.nn.LayerNorm(dim)
-        self.ln_2    = torch.nn.LayerNorm(dim)
+        self.ln_1 = torch.nn.LayerNorm(dim)
+        self.ln_2 = torch.nn.LayerNorm(dim)
 
-        self.fc_mlp1 = torch.nn.Linear(dim, dim*2)
-        self.fc_mlp2 = torch.nn.Linear(dim*2, dim)
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(dim, dim*2),
+            torch.nn.GELU(),
+            torch.nn.Linear(dim*2, dim)
+        )
 
 
     def forward(self, x):
@@ -132,9 +129,7 @@ class Attention_Block(torch.nn.Module):
         x = x + o
 
         o = self.ln_2(x)
-        o = self.fc_mlp1(o)
-        o = torch.nn.functional.gelu(o)
-        o = self.fc_mlp2(o)
+        o = self.mlp(o)
         x = x + o
 
         return x, a

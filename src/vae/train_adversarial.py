@@ -1,7 +1,5 @@
 import numpy as np, torch, tqdm, utils, math #type: ignore
-#from torch_poly_lr_decay import PolynomialLRDecay
 
-ARCH       = 'AE_Transformer'
 DATA_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/training_data/arrays/'
 SAVE_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/outputs/{ARCH}/'
 
@@ -40,8 +38,6 @@ class Beta_Plane_ML:
         self.num_heads      = num_heads
         self.layers         = layers
         self.width          = width
-        self.best           = 10
-        self.H_distance     = 10
         
         # Define Hardware
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

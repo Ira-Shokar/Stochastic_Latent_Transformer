@@ -121,12 +121,11 @@ class Attention_Block(torch.nn.Module):
             torch.nn.Linear(dim*2, dim)
         )
 
-
     def forward(self, x):
 
-        o = self.ln_1(x)
+        o    = self.ln_1(x)
         o, a = self.mha(o)
-        x = x + o
+        x    = x + o
 
         o = self.ln_2(x)
         o = self.mlp(o)

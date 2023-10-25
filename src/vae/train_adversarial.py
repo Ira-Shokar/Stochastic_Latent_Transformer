@@ -38,14 +38,11 @@ class Beta_Plane_ML:
         self.num_heads      = num_heads
         self.layers         = layers
         self.width          = width
-        
-        # Define Hardware
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Define Models
-        self.AE    = Autoencoder(self.feat_dim, self.latent_dim, 4).to(self.device)
-        self.Trans = LSTM_VAE(self.latent_dim, 4).to(self.device)
-        self.Disc  = Discriminator(self.feat_dim, 256).to(self.device)
+        self.AE    = Autoencoder(self.feat_dim, self.latent_dim, 4).to(utils.device)
+        self.Trans = LSTM_VAE(self.latent_dim, 4).to(utils.device)
+        self.Disc  = Discriminator(self.feat_dim, 256).to(utils.device)
 
         # Define Optimiser
         self.optimiser = torch.optim.Adam([
@@ -93,7 +90,7 @@ class Beta_Plane_ML:
 
 
     def fit(self, data, val_data):
-        print(f'Using {self.device} hardware')
+        print(f'Using {utils.device} hardware')
 
         for self.epoch in range(self.total_epochs):
             with tqdm.trange(self.training_steps, ncols=140) as pbar:
@@ -118,10 +115,10 @@ class Beta_Plane_ML:
     def forward(self, x):
         # Store Tensors
         b  =  x.size(0)
-        u  = torch.zeros(b, self.ens_size, self.seq_forward, self.feat_dim  , device=self.device)
-        z  = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=self.device)
-        mu = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=self.device)
-        lv = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=self.device)
+        u  = torch.zeros(b, self.ens_size, self.seq_forward, self.feat_dim  , device=utils.device)
+        z  = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=utils.device)
+        mu = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=utils.device)
+        lv = torch.zeros(b, self.ens_size, self.seq_forward, self.latent_dim, device=utils.device)
 
         z_in  = self.AE.Encoder(x) # Transform to latent space
         for i in range(self.ens_size): 
@@ -138,8 +135,8 @@ class Beta_Plane_ML:
 
     def train(self, x, y): 
         # Use GPU if available
-        x = x.to(self.device)
-        y = y.to(self.device)
+        x = x.to(utils.device)
+        y = y.to(utils.device)
 
         self.AE.train()
         self.Trans.train()
@@ -187,8 +184,8 @@ class Beta_Plane_ML:
     @torch.no_grad()
     def validate(self, x, y):
         # Use GPU if available
-        x = x.to(self.device)
-        y = y.to(self.device)
+        x = x.to(utils.device)
+        y = y.to(utils.device)
 
         self.AE.eval()
         self.Trans.eval()

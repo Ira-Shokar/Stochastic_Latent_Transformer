@@ -37,20 +37,17 @@ class Stochastic_Latent_Transformer:
         self.num_heads      = num_heads
         self.layers         = layers
         self.width          = width
-        
-        # Define Hardware
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Define Models
-        self.AE    = models.Autoencoder(self.feat_dim, self.latent_dim, self.width).to(self.device)
-        self.Trans = models.Stochatic_Transformer(self.latent_dim, self.seq_len).to(self.device)
+        self.AE    = models.Autoencoder(self.feat_dim, self.latent_dim, self.width).to(utils.device)
+        self.Trans = models.Stochatic_Transformer(self.latent_dim, self.seq_len).to(utils.device)
 
         # Define Optimiser
         self.optimiser = torch.optim.Adam(
             list(self.AE.parameters()) + list(self.Trans.parameters()), lr=self.lr)
 
         # Define LR scheduler
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR( self.optimiser, gamma=0.9825)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimiser, gamma=0.9825)
 
         # Loss Tracker
         self.loss_dict     = {'MSE':0, 'mirror': 0, 'z_dist':0, 'ES':0, 'rep':0}
@@ -58,7 +55,7 @@ class Stochastic_Latent_Transformer:
 
 
     def fit(self, data, val_data):
-        print(f'Using {self.device} hardware')
+        print(f'Using {utils.device} hardware')
 
         for self.epoch in range(self.total_epochs):
             with tqdm.trange(self.training_steps, ncols=140) as pbar:
@@ -82,7 +79,7 @@ class Stochastic_Latent_Transformer:
     
     def forward(self, x):
         z = torch.zeros(
-            x.size(0), self.ens_size, 1, self.latent_dim, device=self.device)
+            x.size(0), self.ens_size, 1, self.latent_dim, device=utils.device)
 
         x = self.AE.Encoder(x).unsqueeze(1).expand(-1, self.ens_size, -1, -1)
         for i in range(self.ens_size):
@@ -118,8 +115,8 @@ class Stochastic_Latent_Transformer:
 
     def train(self, x, y): 
         # Use GPU if available
-        x = x.to(self.device)
-        y = y.to(self.device)
+        x = x.to(utils.device)
+        y = y.to(utils.device)
 
         self.AE.train()
         self.Trans.train()
@@ -145,8 +142,8 @@ class Stochastic_Latent_Transformer:
     @torch.no_grad()
     def validate(self, x, y):
         # Use GPU if available
-        x = x.to(self.device)
-        y = y.to(self.device)
+        x = x.to(utils.device)
+        y = y.to(utils.device)
 
         self.AE.eval()
         self.Trans.eval()

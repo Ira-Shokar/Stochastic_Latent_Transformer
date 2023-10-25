@@ -230,6 +230,7 @@ def image_to_np():
     img_buf.close()
     return im_np
 
+
 def plot_ensembles(truth_ens, preds_ens, seq_len=5, damping_time=False, show=True):
 
     num_y     = truth_ens.size()[0]//4
@@ -273,6 +274,7 @@ def plot_ensembles(truth_ens, preds_ens, seq_len=5, damping_time=False, show=Tru
                 fontsize='x-large')
         plt.show()
     else: return image_to_np()
+
     
 def plot_attention(att_weights, seq_len=5, damping_time=False, show=True):
 
@@ -301,6 +303,7 @@ def plot_attention(att_weights, seq_len=5, damping_time=False, show=True):
         
     if show==True: plt.show()
     else: return image_to_np()
+
 
 def plot_pdf(H_t, H_p, edges,show=True):
 
@@ -357,6 +360,7 @@ def plot_pdf(H_t, H_p, edges,show=True):
     if show==True: plt.show()
     else: return image_to_np()
 
+
 def plot_1d_pdf(H_t, H_p, edges, show=True):
 
     label = [r'$U$', r'$\partial_y U$', r'$\partial_t U$']
@@ -394,6 +398,7 @@ def plot_1d_pdf(H_t, H_p, edges, show=True):
 
     if show==True: plt.show()
     else: return image_to_np()
+
 
 def plot_spectra(truth_ens, preds_ens, show=True):
 
@@ -451,6 +456,7 @@ def plot_CPRS(mse_slt, rep_slt, mse_t, rep_t, seq_len=10, show=True):
     if show==True: plt.show()
     else: return image_to_np()
 
+
 def plot_long(truth_long, preds_long, seq_len=5, show=True):
 
     truth_long = truth_long[0].detach().cpu().numpy()
@@ -484,170 +490,3 @@ def plot_long(truth_long, preds_long, seq_len=5, show=True):
     if show==True: plt.show()
     else: return image_to_np()
     
-
-### Probabilities ####################################################################################
-
-'''def load_num_ens(s, t, seq_len=5, roll=False):
-    truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/new_dir/'
-    arr = []
-    for i in range(1000, 3000):
-        try:
-            test_data = np.genfromtxt(truth_path+f'{i}_{s+t}_{s+100}_umean.csv', delimiter=',')
-            if roll is True: test_data = np.roll(test_data, -180, axis=0)
-            arr.append(test_data[:, t-seq_len:])
-        except:
-            try:
-                np.genfromtxt(truth_path+f'0_{t-100}_{t}_umean.csv', delimiter=',')
-            except:
-                pass
-    return np.stack(arr)
-
-
-def load_num_ens2(s, t, seq_len=5, roll=False):
-    truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/new_dir/'
-    arr = []
-    start = s+t
-    end   = (start//10)*10 + 100
-    for i in range(0, 700):
-        try:
-            test_data = np.genfromtxt(truth_path+f'{i}_{start}_{end}_umean.csv', delimiter=',')
-            if roll is True: test_data = np.roll(test_data, -180, axis=0)
-            arr.append(test_data[:, start%10-seq_len:])
-        except: pass
-    return np.stack(arr)
-
-
-@torch.no_grad()
-def generate_ML_ens(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
-
-    if AE_model is not None:
-        AE_model.to(device)
-        AE_model.eval()
-    Trans_model.to(device)
-    Trans_model.eval()
-
-    truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
-    if t<seq_len:
-        test_data    = np.genfromtxt(truth_path+f'0_{s-100}_{s}_umean.csv', delimiter=',')[:, t-seq_len:]
-        app          = np.genfromtxt(truth_path+f'0_{s}_{s+100}_umean.csv', delimiter=',')[:, 0:t]
-        test_data    = np.concatenate((test_data, app), axis=1)
-    else : test_data = np.genfromtxt(truth_path+f'0_{s}_{s+100}_umean.csv', delimiter=',')[:, t-seq_len:t]
-
-    test_data = np.roll(test_data, roll, axis=0)
-
-    data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
-    data = torch.from_numpy(data).transpose(1, 2).float().to(device)
-
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
-    
-    return preds.transpose(1,2), att
-
-
-@torch.no_grad()
-def generate_ML_ens2(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
-
-    if AE_model is not None:
-        AE_model.to(device)
-        AE_model.eval()
-    Trans_model.to(device)
-    Trans_model.eval()
-
-    truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
-    test_data  = np.genfromtxt(truth_path+'1000_1000_6000_umean.csv', delimiter=',')
-    test_data  = np.roll(test_data[:, s+t-seq_len:s+t], roll, axis=0)
-
-    data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
-    data = torch.from_numpy(data).transpose(1, 2).float().to(device)
-
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
-    
-    return preds.transpose(1,2), att
-
-
-@torch.no_grad()
-def generate_ML_ens3(AE_model, Trans_model, s, t, ens_size=6, seq_len=5, latent_dim=256, time_steps=100, roll=0, print_time=False):
-
-    if AE_model is not None:
-        AE_model.to(device)
-        AE_model.eval()
-    Trans_model.to(device)
-    Trans_model.eval()
-
-    truth_path = which_os+'Beta_Plane_Jets/data/test_data/csv_files/'
-    test_data  = np.genfromtxt(truth_path+'e_umean.csv', delimiter=',')
-    test_data  = np.roll(test_data[:, s+t-seq_len:s+t], roll, axis=0)
-
-    data = np.repeat(np.expand_dims(test_data, 0), ens_size, axis=0)
-    data = torch.from_numpy(data).transpose(1, 2).float().to(device)
-
-    if AE_model is None: data, preds, att = prediction_ensemble_trans(Trans_model, seq_len, data, time_steps)
-    else               : data, preds, att = prediction_ensemble(AE_model, Trans_model, seq_len, latent_dim, data, time_steps)
-    
-    return preds.transpose(1,2), att
-
-
-def plot_ens(data, ens_size=6, seq_len=5, title=None):
-    f = plt.figure(figsize = (16,12))
-    for i in range(ens_size**2):
-        plt.subplot(ens_size, ens_size, i+1)
-        im = plt.imshow(data[i], aspect='auto', origin='lower')
-        plt.axvline(x=seq_len, linestyle='--', color='w')
-    if title is not None: plt.suptitle(title)
-    plt.show()
-
-
-def time_dist_ens(data, target_jets=3, seq_len=5, ens_size=5, threshold=0, min=0, t_max=0, width=7):
-    time_arr = []
-    for i in range(ens_size):
-        if i%100==0: print(i)
-        try:
-            time_log = []
-            if t_max==0: t_max = data[0].shape[-1]
-            for t in range(seq_len+min, t_max):
-                u = data[i, :, t]
-                peak_1 = np.argmax(u)
-                u = np.roll(u, -peak_1+50)
-                jets = len(scipy.signal.find_peaks(u, height=threshold, distance=10, width=width)[0])
-                time_log.append(jets)
-                if sum(time_log[-5:])/5==target_jets:
-                    time_arr.append(t-5)
-                    break
-                if t==data[0].shape[-1]-1:
-                    time_arr.append(t_max+10)
-        except IndexError:
-            pass
-        
-    return time_arr
-
-
-def num_jets(arr, threshold=0, width=7):
-    count = []
-    for u in arr:
-        if torch.sum(u)!= 0:
-            peak_1 = torch.argmax(u).item()
-            u = torch.roll(u, -peak_1+50)
-            jets = len(scipy.signal.find_peaks(u, height=threshold, distance=10, width=width)[0])
-        count.append(jets)
-    
-    time_lag = 5
-    mat = np.zeros((8, 3))
-    B   = np.zeros(time_lag)
-    l   = []
-    c   = -1
-    for i in range(time_lag, len(count)):
-        A = count[i-time_lag:i]
-        if 0 not in A:
-            l.append(round(np.sum(A)/time_lag))
-            c+=1
-            if 0 not in B:
-                if   l[c] > l[c-1]: mat[l[c-1], 2] += 1
-                elif l[c] < l[c-1]: mat[l[c-1], 0] += 1
-                else              : mat[l[c-1], 1] += 1
-        B = A
-
-    mat = mat[:5]
-    mat/=np.sum(mat)
-            
-    return l, mat'''

@@ -219,6 +219,17 @@ def CRPS(x, y):
 
 ### PLOTS #########################################################################################
 
+
+def image_to_np():
+    img_buf = io.BytesIO()
+    plt.savefig(img_buf, format='png')
+    plt.close()
+
+    im    = Image.open(img_buf)
+    im_np = np.array(im)
+    img_buf.close()
+    return im_np
+
 def plot_ensembles(truth_ens, preds_ens, seq_len=5, damping_time=False, show=True):
 
     num_y     = truth_ens.size()[0]//4
@@ -261,15 +272,7 @@ def plot_ensembles(truth_ens, preds_ens, seq_len=5, damping_time=False, show=Tru
                 'Initial Conditions (the dotted line) for the Stochastic Beta-Plane System',\
                 fontsize='x-large')
         plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    else: return image_to_np()
     
 def plot_attention(att_weights, seq_len=5, damping_time=False, show=True):
 
@@ -296,17 +299,8 @@ def plot_attention(att_weights, seq_len=5, damping_time=False, show=True):
 
     for i, att in enumerate(att_weights): plot(i, att, 'Numerical Integration')
         
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
 
 def plot_pdf(H_t, H_p, edges,show=True):
 
@@ -360,17 +354,8 @@ def plot_pdf(H_t, H_p, edges,show=True):
     try: fig.colorbar(c, ax=ax)
     except: pass
 
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
 
 def plot_1d_pdf(H_t, H_p, edges, show=True):
 
@@ -407,17 +392,8 @@ def plot_1d_pdf(H_t, H_p, edges, show=True):
         ax.set_title(f'Truth PDF({label[i]})')
         ax.legend()
 
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
 
 def plot_spectra(truth_ens, preds_ens, show=True):
 
@@ -446,17 +422,8 @@ def plot_spectra(truth_ens, preds_ens, show=True):
     plt.title('Kinetic Energy Spectrum, time averaged')
     plt.legend()
 
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
     
 
 def plot_CPRS(mse_slt, rep_slt, mse_t, rep_t, seq_len=10, show=True):
@@ -481,17 +448,8 @@ def plot_CPRS(mse_slt, rep_slt, mse_t, rep_t, seq_len=10, show=True):
     ax.set_xlim(0, 250)
     ax.legend(fontsize=5.2*2)
 
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
 
 def plot_long(truth_long, preds_long, seq_len=5, show=True):
 
@@ -523,17 +481,8 @@ def plot_long(truth_long, preds_long, seq_len=5, show=True):
 
     fig.colorbar(imp, ax=axs.ravel().tolist(), shrink=0.465, pad=0.015, label=r'U(y,t)')
         
-    if show==True:
-        plt.show()
-    else:
-        img_buf = io.BytesIO()
-        plt.savefig(img_buf, format='png')
-        plt.close()
-
-        im    = Image.open(img_buf)
-        im_np = np.array(im)
-        img_buf.close()
-        return im_np
+    if show==True: plt.show()
+    else: return image_to_np()
     
 
 ### Probabilities ####################################################################################

@@ -19,26 +19,27 @@ class Autoencoder(torch.nn.Module):
     def __init__(self, feat_dim=256, lat_dim=64, width=1):
         super().__init__()
 
-        self.enc0 = nn.TEPC_1D(1, width, feat_dim, feat_dim)
-        self.enc1 = nn.TEPC_1D(width, 1, feat_dim, lat_dim)
+        self.enc = torch.nn.Sequential(
+            nn.TEPC_1D(1, width, feat_dim, feat_dim)
+            nn.GELU(),
+            nn.TEPC_1D(width, 1, feat_dim, lat_dim)
+        )
 
-        self.dec0 = nn.TEPC_1D(1, width, lat_dim, feat_dim)
-        self.dec1 = nn.TEPC_1D(width, 1, feat_dim, feat_dim)
-
+        self.dec = torch.nn.Sequential(
+            nn.TEPC_1D(1, width, lat_dim, feat_dim)
+            nn.GELU(),
+            nn.TEPC_1D(width, 1, feat_dim, feat_dim)
+        )   
 
     def Encoder(self, x):
         x = x.unsqueeze(-2)
-        x = self.enc0(x)
-        x = torch.nn.functional.gelu(x)
-        x = self.enc1(x)
+        x = self.enc(x)
         x = x.squeeze(-2)
         return x
     
     def Decoder(self, x):
         x = x.unsqueeze(-2)
-        x = self.dec0(x)
-        x = torch.nn.functional.gelu(x)
-        x = self.dec1(x)
+        x = self.dec(x)
         x = x.squeeze(-2)
         return x
 

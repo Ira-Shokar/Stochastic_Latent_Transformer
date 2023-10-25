@@ -18,13 +18,12 @@ import numpy as np, torch, tqdm, io, random, time, utils, models
 class Stochastic_Latent_Transformer:
     def __init__(self, feat_dim=256, latent_dim=256, seq_len=1, ens_size=4, epochs=1,
                  learning_rate=1e-4, training_steps=1, val_steps=1, num_heads=16, 
-                 layers=2, width=2, save_path=None, file_name=None, run_num=0):
+                 layers=2, width=2, save_path=None, file_name=None):
         super().__init__()
 
         # Define Parameters
         self.save_path      = save_path
         self.file_name      = file_name   
-        self.run_num        = run_num
 
         self.total_epochs   = epochs
         self.training_steps = training_steps
@@ -53,20 +52,9 @@ class Stochastic_Latent_Transformer:
         # Define LR scheduler
         self.scheduler = torch.optim.lr_scheduler.ExponentialLR( self.optimiser, gamma=0.9825)
 
-        # Loss function
-        self.MSE = torch.nn.MSELoss()
-
         # Loss Tracker
         self.loss_dict     = {'MSE':0, 'mirror': 0, 'z_dist':0, 'ES':0, 'rep':0}
         self.val_loss_dict = {'MSE':0, 'mirror': 0, 'z_dist':0, 'ES':0, 'rep':0}
-
-
-    def save_model(self, add_path=''):
-        path       = lambda i, j, k: f"{i}weights/weights_{j}_{k}.pt" 
-        file_name  = f'{self.latent_dim}_{0}_{self.total_epochs}_'
-        file_name += f'{self.run_num}{add_path}'
-        torch.jit.script(self.AE   ).save(path(self.save_path, 'AE'   , file_name))
-        torch.jit.script(self.Trans).save(path(self.save_path, 'Trans', file_name))
 
 
     def fit(self, data, val_data):
@@ -137,7 +125,7 @@ class Stochastic_Latent_Transformer:
         self.Trans.train()
 
         o, z, m      = self.forward(x)                          # Forward Pass through AE & Trans
-        mirror       = self.MSE(m, x)                           # Mirror Loss
+        mirror       = torch.nn.functional.mse_loss(m, x)       # Mirror Loss
         ES, MSE, rep = self.energy_score(o, y)                  # Energy Score, MSE and Rep Losses
         z_dist, _, _ = self.energy_score(z, self.AE.Encoder(y)) # Energy Score in latent space
 
@@ -165,7 +153,7 @@ class Stochastic_Latent_Transformer:
 
         # Model Losses
         o, z, m      = self.forward(x)                          # Forward Pass through AE & Trans
-        mirror       = self.MSE(m, x)
+        mirror       = torch.nn.functional.mse_loss(m, x)       # Mirror Loss
         ES, MSE, rep = self.energy_score(o, y)                  # Energy Score, MSE and Rep Losses
         z_dist, _, _ = self.energy_score(z, self.AE.Encoder(y)) # Energy Score in latent space
 
@@ -175,6 +163,12 @@ class Stochastic_Latent_Transformer:
         self.val_loss_dict['rep']    += rep.item()
         self.val_loss_dict['mirror'] += mirror.item()
         self.val_loss_dict['z_dist'] += z_dist.item()
+
+
+    def save_model(self):
+        path = lambda i, j, k: f"{i}/weights_{j}_{k}.pt" 
+        torch.jit.script(self.AE   ).save(path(self.save_path, 'AE'   , f'{self.latent_dim}'))
+        torch.jit.script(self.Trans).save(path(self.save_path, 'Trans', f'{self.latent_dim}'))
 
 
     def track_losses(self, pbar, val=False):

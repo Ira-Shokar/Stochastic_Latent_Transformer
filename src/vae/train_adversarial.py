@@ -6,13 +6,12 @@ DATA_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/training_data/arrays/'
 SAVE_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/outputs/{ARCH}/'
 
 BATCH_SIZE    = 200;
-EPOCHS        = 500;
+EPOCHS        = 400;
 LEARNING_RATE = 5e-4;
-LATENT_DIM    = 128; 
+LATENT_DIM    = 64; 
 SEQ_LENGTH    = 10;
 SEQ_FORWARD   = 1;
-ENS_SIZE      = 1;
-RUN_NUM       = 1; #1 no z loss
+ENS_SIZE      = 4;
 LAYERS        = 2;
 WIDTH         = 4;
 
@@ -419,8 +418,6 @@ def train(config=None):
     X     = torch.tensor(X[:val], dtype=torch.float32)#[:DATA_SET_SIZE]
     Y     = torch.tensor(Y[:val], dtype=torch.float32)#[:DATA_SET_SIZE]
     X, Y  = utils.shuffle(X, Y) #type: ignore
-
-    file_name = f'{LATENT_DIM}_{SEQ_LENGTH}_{EPOCHS}_{RUN_NUM}';
 
     TRAINING_STEPS = len(X)     // BATCH_SIZE
     VAL_STEPS      = len(Val_X) // BATCH_SIZE

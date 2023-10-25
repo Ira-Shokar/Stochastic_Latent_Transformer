@@ -15,23 +15,21 @@
 
 import numpy as np, torch, utils, SLT
 
-#ARCH       = 'Stochastic_Latent_Transformer'
-ARCH       = 'AE_Transformer'
-DATA_PATH  = f'{utils.path}data/training_data/';
-SAVE_PATH  = f'{utils.path}data/torch_script_outputs/';
-
 BATCH_SIZE    = 200;
 EPOCHS        = 400;
-LEARNING_RATE = 2e-3;
+LEARNING_RATE = 5e-4;
 LATENT_DIM    = 64; 
 SEQ_LENGTH    = 10;
+SEQ_FORWARD   = 1;
 ENS_SIZE      = 4;
-RUN_NUM       = 100; 
 LAYERS        = 2;
-WIDTH         = 4
+WIDTH         = 4;
 
-if __name__ == '__main__':
+def train():
 
+    DATA_PATH = f'{utils.path}data/training_data/';
+    SAVE_PATH = f'{utils.path}data/torch_script_outputs/';
+    
     # load data
     X, Y = utils.load_training_data(DATA_PATH, SEQ_LENGTH)
 
@@ -69,8 +67,9 @@ if __name__ == '__main__':
         training_steps = TRAINING_STEPS ,
         val_steps      = VAL_STEPS      ,
         save_path      = SAVE_PATH      ,
-        run_num        = RUN_NUM        ,
     )
 
     # train model
     model.fit(training_set, validation_set)   
+
+if __name__ == '__main__': train()

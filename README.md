@@ -1,6 +1,6 @@
 # Stochastic Latent Transformer
 
-This repository contains the code for the paper: [Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jet Dynamics](https://arxiv.org/)
+This repository contains the code for the paper: [Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jets](https://arxiv.org/)
 
 ## Stochastic Latent Transformer Model Architecture
 ![Stochastic Latent Transformer Model Architecture](static/SLT.png "Stochastic Latent Transformer Model Architecture")

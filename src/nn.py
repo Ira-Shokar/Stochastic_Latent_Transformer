@@ -72,14 +72,15 @@ class TEPC_1D(torch.nn.Module):
         return x
 
 
-class Multihead_Self_Attention(torch.nn.Module):
+class Multihead_Attention(torch.nn.Module):
 
-    def __init__(self, dim, num_heads):
+    def __init__(self, dim, num_heads, stochastic=False):
         super().__init__()
 
-        self.dim       = dim
-        self.num_heads = num_heads
-        self.head_dim  = dim // num_heads
+        self.dim        = dim
+        self.num_heads  = num_heads
+        self.head_dim   = dim // num_heads
+        self.stochastic = stochastic
 
         self.q_proj = torch.nn.Linear(dim, dim)
         self.k_proj = torch.nn.Linear(dim, dim)
@@ -89,59 +90,51 @@ class Multihead_Self_Attention(torch.nn.Module):
     def forward(self, x):
 
         # Store Batch Size
-        b    = x.size(0)
+        b = x.size(0)
+
+        # Add Forcing
+        y = torch.cat([torch.randn_like(x[:, 0]).unsqueeze(1), x], dim=1) if self.stochastic==True else x
 
         # Linear Projections and Split into Mulitple Heads
-        q    = self.q_proj(x).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
-        k    = self.k_proj(x).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
-        v    = self.v_proj(x).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
+        q = self.q_proj(x).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
+        k = self.k_proj(y).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
+        v = self.v_proj(y).reshape(b, -1, self.num_heads, self.head_dim).transpose(1, 2)
 
-        # Self Attention and Head Concatination
+        # Self/Cross Attention and Head Concatination
         a    = torch.matmul(q, k.transpose(-1, -2)) / self.head_dim**0.5
         mask = torch.triu(-float('inf')*torch.ones(a.size()[1:], device=a.device), diagonal=1)
         a    = torch.nn.functional.softmax(a + mask, dim=-1)
         v    = torch.matmul(a, v).transpose(1, 2).reshape(b, -1, self.dim)
 
         # Linear Projection
-        o    = self.o_proj(v)
+        o = self.o_proj(v)
 
         return o, a.mean(1)
 
 
-class Stochatic_Attention_Block(torch.nn.Module):
-    def __init__(self, dim, num_heads, first=False, last=False):
+class Attention_Block(torch.nn.Module):
+    def __init__(self, dim, num_heads, stochastic=False):
         super().__init__()
 
-        self.first   = first
-        self.last    = last
-
-        self.mha     = Multihead_Self_Attention(dim, num_heads)
+        self.mha     = Multihead_Attention(dim, num_heads, stochatic)
 
         self.ln_1    = torch.nn.LayerNorm(dim)
         self.ln_2    = torch.nn.LayerNorm(dim)
 
-        self.fc_mlp1 = torch.nn.Linear(dim, dim)
-        self.fc_mlp2 = torch.nn.Linear(dim, dim)
+        self.fc_mlp1 = torch.nn.Linear(dim, dim*2)
+        self.fc_mlp2 = torch.nn.Linear(dim*2, dim)
+
 
     def forward(self, x):
 
         o = self.ln_1(x)
-
-        if self.first==True: o = torch.cat([torch.randn_like(o[:, 0]).unsqueeze(1), x], dim=1)
-
         o, a = self.mha(o)
-
-        if self.first==True: o = o[:, 1:]
-            
         x = x + o
-
-        if self.last==True: x = x[:, -1]
 
         o = self.ln_2(x)
         o = self.fc_mlp1(o)
         o = torch.nn.functional.gelu(o)
         o = self.fc_mlp2(o)
-
         x = x + o
 
         return x, a

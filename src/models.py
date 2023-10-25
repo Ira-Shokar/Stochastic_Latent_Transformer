@@ -63,8 +63,8 @@ class Stochatic_Transformer(torch.nn.Module):
         PE[:, 1::2] = torch.cos(position * div_term)
         self.register_buffer('PE', PE)
 
-        self.att_block_0 = nn.Stochatic_Attention_Block(dim, num_heads, first=True)
-        self.att_block_1 = nn.Stochatic_Attention_Block(dim, num_heads, last=True)
+        self.att_block_0 = nn.Attention_Block(dim, num_heads, first=True)
+        self.att_block_1 = nn.Attention_Block(dim, num_heads, last=True)
 
         self.fc_mlp0 = torch.nn.Linear(dim, dim)
         self.fc_mlp1 = torch.nn.Linear(dim, dim)

@@ -38,6 +38,8 @@ We provide the trained STL model in the form of a torchscript object, that can i
 
 ## Citations
 
+If you use Stochatic Latent Transformer please cite:
+
 ```
 @misc{shokar2023stochastic,
       title={Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jets}, 

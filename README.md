@@ -1,6 +1,6 @@
 # Stochastic Latent Transformer
 
-This repository contains the code for the paper: [Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jets](https://arxiv.org/)
+This repository contains the code for the paper: [Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jets]([https://arxiv.org/](https://arxiv.org/abs/2310.16741))
 
 ## Stochastic Latent Transformer Model Architecture
 ![Stochastic Latent Transformer Model Architecture](static/SLT.png "Stochastic Latent Transformer Model Architecture")
@@ -39,5 +39,13 @@ We provide the trained STL model in the form of a torchscript object, that can i
 ## Citations
 
 ```
+@misc{shokar2023stochastic,
+      title={Stochastic Latent Transformer: Efficient Modelling of Stochastically Forced Zonal Jets}, 
+      author={Ira J. S. Shokar and Rich R. Kerswell and Peter H. Haynes},
+      year={2023},
+      eprint={2310.16741},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
 ```
 

@@ -9,7 +9,6 @@
 # environment info
 *.yml
 *.yaml
-*.toml
 
 # data
 data/*

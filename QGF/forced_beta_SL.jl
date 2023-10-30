@@ -45,7 +45,7 @@ dev = GPU();  # Device (CPU/GPU)
 
 if dev==CPU(); Random.seed!(0); else; CUDA.seed!(0); end;
 
-  forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
+forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
 
 prob = SingleLayerQG.Problem(
     dev; nx=n,ny=n, Lx=L, Ly = L, β=β, μ=μ, ν=ν, nν = nν, dt,

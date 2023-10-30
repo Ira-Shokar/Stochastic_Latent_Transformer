@@ -45,6 +45,8 @@ dev = GPU();  # Device (CPU/GPU)
 
 if dev==CPU(); Random.seed!(0); else; CUDA.seed!(0); end;
 
+  forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
+
 prob = SingleLayerQG.Problem(
     dev; nx=n,ny=n, Lx=L, Ly = L, β=β, μ=μ, ν=ν, nν = nν, dt,
     stepper="FilteredRK4", calcF=calcF!, stochastic=true, aliased_fraction = 1/3
@@ -97,8 +99,6 @@ function forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
   @. forcing_spectrum *= ε/ε0;       # normalize forcing to inject energy at rate ε
   return forcing_spectrum
 end
-
-forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
 
 function calcF!(Fh, sol, t, clock, vars, params, grid)
   T = eltype(grid)

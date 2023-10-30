@@ -105,4 +105,3 @@ class Stochatic_Transformer(torch.nn.Module):
         z = self.unshift_phase(z, phi)
 
         return z, a
-

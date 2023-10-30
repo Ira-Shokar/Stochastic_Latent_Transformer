@@ -247,5 +247,3 @@ def SLT_prediction_ensemble(AE, Trans, seq_len, latent_size, truth_ensemble, evo
     prediction     = utils.un_unit_gaussain(u)*100
 
     return truth_ensemble, prediction, a
-
-

@@ -489,4 +489,3 @@ def plot_long(truth_long, preds_long, seq_len=5, show=True):
         
     if show==True: plt.show()
     else: return image_to_np()
-    

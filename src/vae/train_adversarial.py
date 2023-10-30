@@ -1,4 +1,4 @@
-import numpy as np, torch, tqdm, utils, math #type: ignore
+import numpy as np, torch, tqdm, math utils
 
 DATA_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/training_data/arrays/'
 SAVE_PATH  = f'{utils.which_os}Beta_Plane_Jets/data/outputs/{ARCH}/'
@@ -436,4 +436,3 @@ def train(config=None):
 
 if __name__ == '__main__':
     train()
-    

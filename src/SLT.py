@@ -40,7 +40,7 @@ class Stochastic_Latent_Transformer:
 
         # Define Models
         self.AE    = models.Autoencoder(self.feat_dim, self.latent_dim, self.width).to(utils.device)
-        self.Trans = models.Stochatic_Transformer(self.latent_dim, self.seq_len).to(utils.device)
+        self.Trans = models.Stochastic_Transformer(self.latent_dim, self.seq_len).to(utils.device)
 
         # Define Optimiser
         self.optimiser = torch.optim.Adam(

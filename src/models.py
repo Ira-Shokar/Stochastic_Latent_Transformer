@@ -49,7 +49,7 @@ class Autoencoder(torch.nn.Module):
         return x
 
 
-class Stochatic_Transformer(torch.nn.Module):
+class Stochastic_Transformer(torch.nn.Module):
     def __init__(self, dim=256, seq_len=5, num_heads=16):
         super().__init__()
 

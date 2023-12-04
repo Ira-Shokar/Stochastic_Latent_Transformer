@@ -95,14 +95,16 @@ function forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
   forcing_spectrum = @. exp(-(K - k_f)^2 / (2 * k_width^2))
   @CUDA.allowscalar forcing_spectrum[grid.Krsq .== 0] .= 0 # ensure forcing has zero domain-average
 
-  ε0 = FF.parsevalsum(forcing_spectrum .* grid.invKrsq / 2, grid) / (grid.Lx * grid.Ly)
+  ε0 = FourierFlows.parsevalsum(forcing_spectrum .* grid.invKrsq / 2, grid) / (grid.Lx * grid.Ly)
   @. forcing_spectrum *= ε/ε0;       # normalize forcing to inject energy at rate ε
   return forcing_spectrum
 end
 
 function calcF!(Fh, sol, t, clock, vars, params, grid)
+  random_uniform = CUDA.functional() ?  CUDA.rand : rand
   T = eltype(grid)
-  @. Fh = sqrt(forcing_spectrum) * cis(2π * rand(T)) / sqrt(clock.dt)
+  @CUDA.allowscalar d = random_uniform(T) #to play nicely with CUDA 10.2
+  @. vars.Fh = sqrt(params.spectrum) * cis(2π * d) / sqrt(clock.dt)
   return nothing
 end;
 

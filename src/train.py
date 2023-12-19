@@ -15,47 +15,47 @@
 
 import numpy as np, torch, utils, SLT
 
-BATCH_SIZE    = 200;
-EPOCHS        = 400;
-LEARNING_RATE = 5e-4;
-LATENT_DIM    = 64; 
-SEQ_LENGTH    = 10;
-SEQ_FORWARD   = 1;
-ENS_SIZE      = 4;
-LAYERS        = 2;
-WIDTH         = 4;
+BATCH_SIZE    = 200
+EPOCHS        = 400
+LEARNING_RATE = 5e-4
+LATENT_DIM    = 64
+SEQ_LENGTH    = 10
+SEQ_FORWARD   = 1
+ENS_SIZE      = 4
+LAYERS        = 2
+WIDTH         = 4
 
 def train():
+    # Set paths
+    DATA_PATH = f'{utils.path}data/training_data/'
+    SAVE_PATH = f'{utils.path}data/torch_script_outputs/'
 
-    DATA_PATH = f'{utils.path}data/training_data/';
-    SAVE_PATH = f'{utils.path}data/torch_script_outputs/';
-    
-    # load data
+    # Load data
     X, Y = utils.load_training_data(DATA_PATH, SEQ_LENGTH)
 
-    # normalise data to standard normal distribution
+    # Normalize data to standard normal distribution
     X = utils.unit_gaussain(X)[0]
     Y = utils.unit_gaussain(Y)[0]
 
-    # split training and validation data
+    # Split training and validation data
     val   = 200000
     Val_X = torch.tensor(X[val:], dtype=torch.float32)
     Val_Y = torch.tensor(Y[val:], dtype=torch.float32)
     X     = torch.tensor(X[:val], dtype=torch.float32)
     Y     = torch.tensor(Y[:val], dtype=torch.float32)
 
-    # shuffle training data
-    X, Y  = utils.shuffle(X, Y) 
+    # Shuffle training data
+    X, Y = utils.shuffle(X, Y)
 
-    # number of steps per epoch
+    # Number of steps per epoch
     TRAINING_STEPS = len(X)     // BATCH_SIZE
     VAL_STEPS      = len(Val_X) // BATCH_SIZE
 
-    # define torch dataloader
+    # Define torch dataloader
     training_set   = utils.DataGenerator(X    , Y    , TRAINING_STEPS, BATCH_SIZE)
     validation_set = utils.DataGenerator(Val_X, Val_Y, VAL_STEPS     , BATCH_SIZE)
-        
-    # define wandb training tracker
+
+    # Define wandb training tracker
     model = SLT.Stochastic_Latent_Transformer(
         epochs         = EPOCHS         ,
         learning_rate  = LEARNING_RATE  ,
@@ -69,7 +69,7 @@ def train():
         save_path      = SAVE_PATH      ,
     )
 
-    # train model
-    model.fit(training_set, validation_set)   
+    # Train model
+    model.fit(training_set, validation_set)
 
 if __name__ == '__main__': train()

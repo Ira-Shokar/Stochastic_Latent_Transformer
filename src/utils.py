@@ -125,9 +125,88 @@ class DataGenerator(torch.utils.data.Dataset):
         Y_batch = self.Y[idx*self.batch_size: (idx+1)*self.batch_size]
         Y_batch = Y_batch[:, :self.seq_forward]
         return (X_batch, Y_batch)
+
+
+def save_model(model, arch, latent_dim, save_path):
+    """
+    Save the trained model.
+    """
+    path = lambda i, j, k: f"{i}weights/weights_{j}_{k}.pt"
+    file_name = f'{latent_dim}'
+    torch.save(model.state_dict(), path(save_path, arch, file_name))
+
+    def load_model(self, arch, latent_dim):
+        """
+        Load a pre-trained model.
+
+        Parameters:
+        - arch (str): Architecture.
+        - latent_dim (int): Latent size.
+
+        Returns:
+        - torch.jit.ScriptModule: Loaded model.
+        """
+        weights_path = f'{utils.path}data/torch_script_models/'
+        file_name = f'weights_{arch}_{latent_dim}'
+        file = f'{weights_path}{file_name}.pt'
+        return torch.jit.load(io.BytesIO(open(file, 'rb').read()), map_location='cpu')
     
 
 ### MODEL EVALUATION ##############################################################################
+
+def SLT_prediction_ensemble(AE, Trans, seq_len, latent_size, truth_ensemble, evolution_time,
+                            seed=0, inference=True, print_time=False):
+        """
+        Make predictions using the Stochastic Latent Transformer.
+
+        Parameters:
+        - AE (torch.nn.Module): Autoencoder model.
+        - Trans (torch.nn.Module): Stochastic Transformer model.
+        - seq_len (int): Length of input sequence.
+        - latent_size (int): Latent size.
+        - truth_ensemble (torch.Tensor): Input truth ensemble.
+        - evolution_time (int): Time for evolution.
+        - seed (int): Random seed.
+        - inference (bool): Inference mode.
+        - print_time (bool): Flag to print prediction time.
+
+        Returns:
+        - Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Truth ensemble, prediction, and attention weights.
+        """
+        hardware = "cuda" if torch.cuda.is_available() else "cpu"
+        device = torch.device(hardware)
+
+        # TODO - fix deterministic seeding:
+        if inference == True and hardware == "cpu":
+            torch.use_deterministic_algorithms(True)
+            torch.manual_seed(seed)
+            random.seed(seed)
+
+        AE.eval().to(device)
+        Trans.eval().to(device)
+
+        truth_ensemble, _, _ = utils.unit_gaussain(truth_ensemble.to(device))
+        ens_size = truth_ensemble.size(0)
+
+        z = torch.zeros((ens_size, seq_len + evolution_time, latent_size)).to(device)
+        a = torch.zeros((ens_size, seq_len + evolution_time, seq_len + 1, seq_len + 1)).to(device)
+
+        time_1 = time.time()
+
+        z[:, :seq_len] = AE.Encoder(truth_ensemble[:, :seq_len])
+        for t in range(seq_len, evolution_time + seq_len):
+            z[:, t], a[:, t] = Trans(z[:, t - seq_len:t])
+        u = AE.Decoder(z)
+
+        time_2 = time.time()
+
+        if print_time:
+            print(f'Prediction time: {(time_2 - time_1) / ens_size:.4f} seconds')
+
+        truth_ensemble = utils.un_unit_gaussain(truth_ensemble) * 100
+        prediction = utils.un_unit_gaussain(u) * 100
+
+        return truth_ensemble, prediction, a
 
 
 def calculate_grad_fields(truth_ens, preds_ens):
@@ -215,6 +294,24 @@ def CRPS(x, y):
         rep.append(ens_var.detach().cpu().abs().numpy())
 
     return crps, mse, rep
+
+
+def hellinger_distance_3D(p, q):
+    """
+    Calculate Hellinger distance between two 3D tensors.
+
+    Parameters:
+    - p (torch.Tensor): Tensor P.
+    - q (torch.Tensor): Tensor Q.
+
+    Returns:
+    - torch.Tensor: Hellinger distance.
+    """
+    d  = (torch.sqrt(p.mean((1, 2))) - torch.sqrt(q.mean((1, 2)))) ** 2
+    d += (torch.sqrt(p.mean((0, 2))) - torch.sqrt(q.mean((0, 2)))) ** 2
+    d += (torch.sqrt(p.mean((0, 1))) - torch.sqrt(q.mean((0, 1)))) ** 2
+    h  = torch.sqrt(torch.sum(d) / (2 * 3))
+    return h
 
 
 ### PLOTS #########################################################################################

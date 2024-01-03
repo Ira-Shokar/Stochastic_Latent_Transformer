@@ -21,6 +21,8 @@ using Statistics: mean
 using LinearAlgebra: ldiv!
 import FourierFlows as FF
 
+
+
 # Define simulation parameters
             dev = GPU();                # Device (CPU/GPU)
               L = 2π                    # domain size

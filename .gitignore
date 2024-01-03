@@ -15,6 +15,9 @@ data/*
 *.csv
 *.npy
 
+# experimental files
+*copy.ipynb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

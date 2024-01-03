@@ -14,7 +14,6 @@
 
 import torch
 
-
 class TEPC_1D(torch.nn.Module):
     """
     1D Translatiion Equivarient Pointwise Convolution (TEPC) Layer.

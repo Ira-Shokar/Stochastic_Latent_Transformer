@@ -15,14 +15,14 @@
 
 # Based on the GeophysicalFlows example
 
-#using Pkg
-#Pkg.activate(".")
-
+# Import necessary packages
 using GeophysicalFlows, CUDA, Random, Printf #, Metal
 using Statistics: mean
 using LinearAlgebra: ldiv!
 import FourierFlows as FF
 
+# Define simulation parameters
+            dev = GPU();                # Device (CPU/GPU)
               L = 2π                    # domain size
               n = 256                   # 2D resolution: n² grid points
 
@@ -41,80 +41,144 @@ import FourierFlows as FF
     k_f = 16.0 * 2π/L   # the forcing wavenumber, `k_f`, for a spectrum that is a ring in wavenumber space
 k_width = 1.5  * 2π/L   # the width of the forcing spectrum, `δ_f`
 
-dev = GPU();  # Device (CPU/GPU)
+### FUNCTIONS ############################################################################################
 
+"""
+    forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
+
+Generate the forcing spectrum based on the given parameters.
+
+# Arguments
+- `ε`: Forcing energy input rate.
+- `k_f`: The forcing wavenumber for a spectrum that is a ring in wavenumber space.
+- `k_width`: The width of the forcing spectrum.
+- `grid`: AbstractGrid representing the simulation grid.
+
+# Returns
+A 2D array representing the forcing spectrum.
+"""
+function forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
+    K = @. sqrt(grid.Krsq)            # a 2D array with the total wavenumber
+    forcing_spectrum = @. exp(-(K - k_f)^2 / (2 * k_width^2))
+    @CUDA.allowscalar forcing_spectrum[grid.Krsq .== 0] .= 0  # ensure forcing has zero domain-average
+
+    ε0 = FourierFlows.parsevalsum(forcing_spectrum .* grid.invKrsq / 2, grid) / (grid.Lx * grid.Ly)
+    @. forcing_spectrum *= ε / ε0       # normalize forcing to inject energy at rate ε
+    return forcing_spectrum
+end
+
+"""
+    calcF!(Fh, sol, t, clock, vars, params, grid)
+
+Calculate the forcing term for the simulation.
+
+# Arguments
+- `Fh`: Output array for the forcing term.
+- `sol`: Solution array.
+- `t`: Current time.
+- `clock`: Clock object.
+- `vars`: Variables object.
+- `params`: Parameters object.
+- `grid`: AbstractGrid representing the simulation grid.
+
+# Returns
+Nothing
+"""
+function calcF!(Fh, sol, t, clock, vars, params, grid)
+    random_uniform = CUDA.functional() ? CUDA.rand : rand
+    T = eltype(grid)
+    @CUDA.allowscalar d = random_uniform(T)  # to play nicely with CUDA 10.2
+    @. vars.Fh = sqrt(params.spectrum) * cis(2π * d) / sqrt(clock.dt)
+    return nothing
+end;
+
+"""
+    get_q(prob)
+
+Extract Q field from the simulation problem.
+
+# Arguments
+- `prob`: Simulation problem.
+
+# Returns
+A 2D array representing the Q field.
+"""
+get_q(prob) = Array(prob.vars.q)
+
+"""
+    get_ψ(prob)
+
+Extract streamfunction (ψ) field from the simulation problem.
+
+# Arguments
+- `prob`: Simulation problem.
+
+# Returns
+A 2D array representing the streamfunction (ψ) field.
+"""
+get_ψ(prob) = Array(prob.vars.ψ)
+
+"""
+    get_u(prob)
+Extract velocity field (u) from the simulation
+
+"""
+
+
+
+### SCRIPT ############################################################################################
+
+
+
+# Seed random number generator based on the device
 if dev==CPU(); Random.seed!(0); else; CUDA.seed!(0); end;
 
+# Generate forcing spectrum
 forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
 
+# Define the simulation problem
 prob = SingleLayerQG.Problem(
-    dev; nx=n,ny=n, Lx=L, Ly = L, β=β, μ=μ, ν=ν, nν = nν, dt,
-    stepper="FilteredRK4", calcF=calcF!, stochastic=true, aliased_fraction = 1/3
-    );
+    dev; nx=n, ny=n, Lx=L, Ly=L, β=β, μ=μ, ν=ν, nν=nν, dt,
+    stepper="FilteredRK4", calcF=calcF!, stochastic=true, aliased_fraction=1/3
+)
 
-SingleLayerQG.set_q!(prob, device_array(dev)(zeros(prob.grid.nx, prob.grid.ny)));
+# Initialize vorticity field
+SingleLayerQG.set_q!(prob, device_array(dev)(zeros(prob.grid.nx, prob.grid.ny)))
 
+# Define diagnostics for energy and enstrophy
 E = Diagnostic(SingleLayerQG.energy, prob; nsteps, freq=save_substeps)
 Z = Diagnostic(SingleLayerQG.enstrophy, prob; nsteps, freq=save_substeps)
-diags = [E, Z]; # A list of Diagnostics types passed to "stepforward!" will  be updated every timestep.
+diags = [E, Z];  # A list of Diagnostics types passed to "stepforward!" will be updated every timestep.
 
-filename = "singlelayerqg_forcedbeta.jld2";
+# Define output filename
+filename = "singlelayerqg_forcedbeta.jld2"
 
+# Remove file if it already exists
 if isfile(filename); rm(filename); end
 
+# Create output object
 output = Output(prob, filename, (:u, get_u), (:q, get_q), (:ψ, get_ψ))
 
+# Save problem and initial output
 saveproblem(output)
- saveoutput(output)
+saveoutput(output)
 
+# Start simulation
 startwalltime = time()
 
 while prob.clock.step <= nsteps
+    stepforward!(prob, diags, save_substeps)
+    SingleLayerQG.updatevars!(prob)
 
-  stepforward!(prob, diags, save_substeps)
-  SingleLayerQG.updatevars!(prob)
-
-  if prob.clock.step % save_substeps == 0
-    log = @sprintf("step: %04d, t: %d, E: %.3e, Q: %.3e, walltime: %.2f min",
-    prob.clock.step, prob.clock.t, E.data[E.i], Z.data[Z.i], (time()-startwalltime)/60)
-    println(log)
-    saveoutput(output)
-  end
+    # Print and save output at specified intervals
+    if prob.clock.step % save_substeps == 0
+        log = @sprintf("step: %04d, t: %d, E: %.3e, Q: %.3e, walltime: %.2f min",
+                       prob.clock.step, prob.clock.t, E.data[E.i], Z.data[Z.i], (time() - startwalltime) / 60)
+        println(log)
+        saveoutput(output)
+    end
 end
 
-savediagnostic(E, "energy"   , output.path)
+# Save final diagnostics
+savediagnostic(E, "energy", output.path)
 savediagnostic(Z, "enstrophy", output.path)
-
-### FUNCTIONS #####################################################################################
-
-
-function forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
-
-  K = @. sqrt(grid.Krsq)            # a 2D array with the total wavenumber
-
-  forcing_spectrum = @. exp(-(K - k_f)^2 / (2 * k_width^2))
-  @CUDA.allowscalar forcing_spectrum[grid.Krsq .== 0] .= 0 # ensure forcing has zero domain-average
-
-  ε0 = FourierFlows.parsevalsum(forcing_spectrum .* grid.invKrsq / 2, grid) / (grid.Lx * grid.Ly)
-  @. forcing_spectrum *= ε/ε0;       # normalize forcing to inject energy at rate ε
-  return forcing_spectrum
-end
-
-function calcF!(Fh, sol, t, clock, vars, params, grid)
-  random_uniform = CUDA.functional() ?  CUDA.rand : rand
-  T = eltype(grid)
-  @CUDA.allowscalar d = random_uniform(T) #to play nicely with CUDA 10.2
-  @. vars.Fh = sqrt(params.spectrum) * cis(2π * d) / sqrt(clock.dt)
-  return nothing
-end;
-
-get_q(prob) = Array(prob.vars.q)
-get_ψ(prob) = Array(prob.vars.ψ)
-
-function get_u(prob)
-  @. prob.vars.qh = prob.sol
-  MultiLayerQG2.streamfunctionfrompv!(prob.vars.ψh, prob.vars.qh, prob.params, prob.grid)
-  @. prob.vars.uh = -im * prob.grid.l * prob.vars.ψh
-  ldiv!(prob.vars.u, prob.params.rfftplan, prob.vars.uh)
-  return Array(prob.vars.u)
-end

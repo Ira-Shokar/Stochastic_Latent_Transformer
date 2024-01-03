@@ -47,7 +47,7 @@ k_width = 1.5  * 2π/L   # the width of the forcing spectrum, `δ_f`
 # Seed random number generator based on the device
 if dev==CPU(); Random.seed!(0); else; CUDA.seed!(0); end;
 
-# Generate forcing spectrum
+# Generate forcing spectrum (forcingspectrum and calcF! defined in utils.jl)
 forcing_spectrum = forcingspectrum(ε, k_f, k_width, FF.TwoDGrid(dev; nx=n, Lx=L))
 
 # Define the simulation problem
@@ -68,7 +68,7 @@ diags = [E, Z];  # A list of Diagnostics types passed to "stepforward!" will be 
 filename = "singlelayerqg_forcedbeta.jld2"
 if isfile(filename); rm(filename); end
 
-# Create output object
+# Create output object (get_u, get_q and get_ψ defined in utils.jl)
 output = Output(prob, filename, (:u, get_u), (:q, get_q), (:ψ, get_ψ))
 
 # Save problem and initial output

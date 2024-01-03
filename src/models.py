@@ -32,14 +32,14 @@ class Autoencoder(torch.nn.Module):
         super().__init__()
 
         # Encoder MLP using TEPC_1D layers and GELU activation
-        self.enc = torch.nn.Sequential(
+        self._enc = torch.nn.Sequential(
             nn.TEPC_1D(1, width, feat_dim, feat_dim),
             torch.nn.GELU(),
             nn.TEPC_1D(width, 1, feat_dim, lat_dim)
         )
 
         # Decoder MLP using TEPC_1D layers and GELU activation
-        self.dec = torch.nn.Sequential(
+        self._dec = torch.nn.Sequential(
             nn.TEPC_1D(1, width, lat_dim, feat_dim),
             torch.nn.GELU(),
             nn.TEPC_1D(width, 1, feat_dim, feat_dim)
@@ -57,7 +57,7 @@ class Autoencoder(torch.nn.Module):
         - torch.Tensor: Encoded tensor.
         """
         x = x.unsqueeze(-2)
-        x = self.enc(x)
+        x = self._enc(x)
         x = x.squeeze(-2)
         return x
 
@@ -72,7 +72,7 @@ class Autoencoder(torch.nn.Module):
         - torch.Tensor: Decoded tensor.
         """
         x = x.unsqueeze(-2)
-        x = self.dec(x)
+        x = self._dec(x)
         x = x.squeeze(-2)
         return x
 
@@ -134,7 +134,7 @@ class Stochastic_Transformer(torch.nn.Module):
         k = lambda x: torch.fft.fftfreq(x) * x
         self.register_buffer('k', k(dim // 2 + 1))
 
-    def shift_phase(self, z):
+    def _shift_phase(self, z):
         """
         Shift the phase of the input tensor in the frequency domain.
 
@@ -151,7 +151,7 @@ class Stochastic_Transformer(torch.nn.Module):
         z   = torch.fft.irfft(z, norm='ortho')
         return z, phi[:, -1]
 
-    def unshift_phase(self, z, phi):
+    def _unshift_phase(self, z, phi):
         """
         Unshift the phase of the tensor to revert the alignment.
 
@@ -177,7 +177,7 @@ class Stochastic_Transformer(torch.nn.Module):
         Returns:
         - Tuple[torch.Tensor, torch.Tensor]: Output tensor and attention weights.
         """
-        z, phi = self.shift_phase(z)
+        z, phi = self._shift_phase(z)
 
         z    = z + self.TE
         z, a = self.att_block_0(z)
@@ -186,7 +186,7 @@ class Stochastic_Transformer(torch.nn.Module):
 
         z = self.mlp(z[:, -1])
 
-        z = self.unshift_phase(z, phi)
+        z = self._unshift_phase(z, phi)
 
         return z, a
 ```

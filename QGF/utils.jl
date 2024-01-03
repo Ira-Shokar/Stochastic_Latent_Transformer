@@ -17,8 +17,6 @@
 using GeophysicalFlows, CUDA, Random #, Metal
 using LinearAlgebra: ldiv!
 
-include("utils.jl")
-
 """
     forcingspectrum(ε, k_f, k_width, grid::AbstractGrid)
 
@@ -71,13 +69,13 @@ end;
 """
     get_q(prob)
 
-Extract Q field from the simulation problem.
+Extract vorticity (q) field from the simulation problem.
 
 # Arguments
 - `prob`: Simulation problem.
 
 # Returns
-A 2D array representing the Q field.
+A 2D array representing the vorticity (q) field.
 """
 get_q(prob) = Array(prob.vars.q)
 

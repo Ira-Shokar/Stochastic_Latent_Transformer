@@ -21,7 +21,8 @@ using Statistics: mean
 using LinearAlgebra: ldiv!
 import FourierFlows as FF
 
-
+# Import helper functions
+include("utils.jl")
 
 # Define simulation parameters
             dev = GPU();                # Device (CPU/GPU)
@@ -55,7 +56,7 @@ prob = SingleLayerQG.Problem(
     stepper="FilteredRK4", calcF=calcF!, stochastic=true, aliased_fraction=1/3
 )
 
-# Initialize vorticity field
+# Initialize vorticity (q) field
 SingleLayerQG.set_q!(prob, device_array(dev)(zeros(prob.grid.nx, prob.grid.ny)))
 
 # Define diagnostics for energy and enstrophy
@@ -63,10 +64,8 @@ E = Diagnostic(SingleLayerQG.energy, prob; nsteps, freq=save_substeps)
 Z = Diagnostic(SingleLayerQG.enstrophy, prob; nsteps, freq=save_substeps)
 diags = [E, Z];  # A list of Diagnostics types passed to "stepforward!" will be updated every timestep.
 
-# Define output filename
+# Define output filename and remove file if it already exists
 filename = "singlelayerqg_forcedbeta.jld2"
-
-# Remove file if it already exists
 if isfile(filename); rm(filename); end
 
 # Create output object
@@ -80,6 +79,7 @@ saveoutput(output)
 startwalltime = time()
 
 while prob.clock.step <= nsteps
+    # step forward simulation and update variables
     stepforward!(prob, diags, save_substeps)
     SingleLayerQG.updatevars!(prob)
 

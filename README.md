@@ -26,7 +26,7 @@ This repository contains the code for the paper: [Stochastic Latent Transformer:
 
 - Directory [`QGF`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF) contains the julia scripts used to generate the numerical integrations of the beta-plane turbulence model in 2D using [GeophysicalFlows.jl](https://github.com/FourierFlows/GeophysicalFlows.jl).
     - [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) defines the model parameters and forcing for a Quasi-geostrophic flow on a 2D periodic beta-plane and integrates using a pseudo-spectral solver .
-    - [`QGF/utils.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/tuls.jl) defines helped functions for the forcing form as well as retrieving variables from the solver.
+    - [`QGF/utils.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/utils.jl) defines helper functions for the forcing form as well as retrieving variables from the solver.
     - [`QGF/plots_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/plots_SL.jl) reads the JLD2 files output from [`QGF/forced_beta_SL.jl`](https://github.com/Ira-Shokar/Stochastic_Latent_Transformer/tree/main/QGF/forced_beta_SL.jl) and plots latitude-time plots of zonally-averaged zonal velocity (U) as well as the assocaited fields and saves the time evolution of U as a csv.
 
 ## Datasets

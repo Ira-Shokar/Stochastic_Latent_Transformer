@@ -56,7 +56,7 @@ prob = SingleLayerQG.Problem(
     stepper="FilteredRK4", calcF=calcF!, stochastic=true, aliased_fraction=1/3
 )
 
-# Initialize vorticity (q) field
+# Initialise vorticity (q) field from rest
 SingleLayerQG.set_q!(prob, device_array(dev)(zeros(prob.grid.nx, prob.grid.ny)))
 
 # Define diagnostics for energy and enstrophy

@@ -93,17 +93,17 @@ class Stochastic_Latent_Transformer:
                 self.val_loss_dict = {x: 0 for x in self.val_loss_dict}
 
                 for self.step, train_batch in zip(pbar, data):
-                    self.train(*train_batch)
+                    self._train(*train_batch)
                     self.track_losses(pbar)
 
                     if self.step == (self.training_steps - 1):
                         self.scheduler.step()
 
                         for self.val_step, val_batch in zip(range(self.val_steps), val_data):
-                            self.validate(*val_batch)
+                            self._validate(*val_batch)
 
                             if self.val_step == (self.val_steps - 1):
-                                self.track_losses(pbar, val=True)
+                                self._track_losses(pbar, val=True)
 
         utils.save_model(self.AE   , "AE"   , self.latent_dim, self.save_path)
         utils.save_model(self.Trans, "Trans", self.latent_dim, self.save_path)
@@ -160,7 +160,7 @@ class Stochastic_Latent_Transformer:
         spec = torch.cdist(y, x).mean() / x.size(-1) ** 0.5
         return MAE, spec
 
-    def train(self, x, y):
+    def _train(self, x, y):
         """
         Training step of the Stochastic Latent Transformer.
 
@@ -194,7 +194,7 @@ class Stochastic_Latent_Transformer:
         self.loss_dict['z_dist'] += z_dist.item()
 
     @torch.no_grad()
-    def validate(self, x, y):
+    def _validate(self, x, y):
         """
         Validation step of the Stochastic Latent Transformer.
 
@@ -223,7 +223,7 @@ class Stochastic_Latent_Transformer:
         self.val_loss_dict['mirror'] += mirror.item()
         self.val_loss_dict['z_dist'] += z_dist.item()
     
-    def track_losses(self, pbar, val=False):
+    def _track_losses(self, pbar, val=False):
         """
         Track and display losses during training or validation.
 

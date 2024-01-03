@@ -53,7 +53,7 @@ class TEPC_1D(torch.nn.Module):
         self.register_buffer("k_in" , k(self.in_dim))
         self.register_buffer("k_out", k(self.out_dim))
 
-    def shift_phase(self, z):
+    def _shift_phase(self, z):
         """
         Shift the phase of the input tensor to align frequencies.
 
@@ -69,7 +69,7 @@ class TEPC_1D(torch.nn.Module):
         z = z * torch.exp(-1j * phi_k)
         return z, phi[..., 0].unsqueeze(-1)
 
-    def unshift_phase(self, z, phi):
+    def _unshift_phase(self, z, phi):
         """
         Unshift the phase of the tensor to revert the alignment.
 
@@ -96,7 +96,7 @@ class TEPC_1D(torch.nn.Module):
         - torch.Tensor: Output tensor.
         """
         # Transform to spectral space and align phase
-        x_ft, phi = self.shift_phase(x)
+        x_ft, phi = self._shift_phase(x)
 
         # Pad to match input Fourier modes
         x_ft = torch.nn.functional.pad(x_ft, (0, self.modes - x_ft.size(-1)))
@@ -108,7 +108,7 @@ class TEPC_1D(torch.nn.Module):
         out_ft = out_ft[..., :self.out_dim]
 
         # Return to physical space and shift phase back
-        x = self.unshift_phase(out_ft, phi)
+        x = self._unshift_phase(out_ft, phi)
         return x
 
 

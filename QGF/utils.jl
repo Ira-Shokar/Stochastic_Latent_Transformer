@@ -104,4 +104,4 @@ function get_u(prob)
     @. prob.vars.uh = -im * prob.grid.l * prob.vars.ψh
     ldiv!(prob.vars.u, prob.params.rfftplan, prob.vars.uh)
     return Array(prob.vars.u)
-  end
+end

@@ -39,7 +39,7 @@ We provide the trained STL model in the form of a torchscript object, that can i
 
 ## Citations
 
-If you use Stochatic Latent Transformer please cite:
+If you use Stochastic Latent Transformer please cite:
 
 ```
 @misc{shokar2023stochastic,
